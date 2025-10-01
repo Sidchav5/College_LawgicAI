@@ -1,0 +1,43 @@
+.profile-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.dropdown {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 160px;
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+
+.dropdown button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: black;
+}
+
+.dropdown button:hover {
+  background-color: #f0f0f0;
+}
+
+.P {
+  color: white;       /* ✅ Makes "Profile ⬇" white */
+  cursor: pointer;    /* ✅ Looks clickable */
+  font-weight: 500;   /* optional: bolder look */
+}
+
+.P:hover {
+  color: rgb(209, 180, 143);  /* ✅ hover effect */
+}
