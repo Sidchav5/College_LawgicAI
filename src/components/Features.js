@@ -13,13 +13,13 @@ function Features() {
       img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
       title: "Generate Contract",
       text: "Easily generate legally compliant contracts tailored to your needs with AI-driven templates.",
-      link: "#"
+      link: "/generate"
     },
     {
       img: "https://cdn-icons-png.flaticon.com/512/1256/1256650.png",
       title: "Community Support",
       text: "Engage with a vibrant community of legal professionals and users for insights and advice.",
-      link: "#"
+      link: "/Community"
     },
     {
       img: "https://cdn-icons-png.flaticon.com/512/3135/3135714.png",

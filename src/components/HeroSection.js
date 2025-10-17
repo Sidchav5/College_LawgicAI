@@ -12,7 +12,7 @@ function HeroSection() {
         </div>
         <div className="poster-info">
           <p>
-            "GuardPass AI Contract Risk Platform is an intelligent solution for analyzing contracts and legal documents. Users can assess risks, identify contradictions, and get AI-driven insights for safer, more informed decision-making. Designed for legal teams and professionals, it ensures contracts are clear, compliant, and risk-free."
+            "LawgicAI Contract Risk Platform is an intelligent solution for analyzing contracts and legal documents. Users can assess risks, identify contradictions, and get AI-driven insights for safer, more informed decision-making. Designed for legal teams and professionals, it ensures contracts are clear, compliant, and risk-free."
           </p>
         </div>
       </div>

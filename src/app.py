@@ -1,20 +1,24 @@
+from dotenv import load_dotenv
+load_dotenv() 
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
-from dotenv import load_dotenv
 import certifi
 import pandas as pd
 import traceback
 
+# Import Services
 from Final.analyze import analyze_contract
+from service.Generate import generate_bp
+from service.support import support_bp   # ✅ NEW IMPORT
 
-# Load environment variables
-load_dotenv()
-
+# -----------------------------
+# Configuration and Setup
+# -----------------------------
 SECRET_KEY = os.getenv("SECRET_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DB = os.getenv("MONGO_DB")
@@ -36,7 +40,9 @@ UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+# -----------------------------
 # Authentication Routes
+# -----------------------------
 @app.route("/signup", methods=["POST"])
 def signup():
     try:
@@ -113,10 +119,8 @@ def update_profile():
             update_data["email"] = data["email"]
         if "dob" in data:
             update_data["dob"] = data["dob"]
-        # In update_profile()
         if "password" in data and data.get("password"):
             update_data["password"] = generate_password_hash(data["password"], method="pbkdf2:sha256")
-
 
         if update_data:
             users_collection.update_one({"email": current_user}, {"$set": update_data})
@@ -129,7 +133,9 @@ def update_profile():
         print(traceback.format_exc())
         return jsonify({"message": "Internal server error"}), 500
 
+# -----------------------------
 # Contract Analysis Routes
+# -----------------------------
 @app.route("/api/analyze-text", methods=["POST"])
 @jwt_required()
 def analyze_text():
@@ -182,6 +188,20 @@ def health():
         print(traceback.format_exc())
         return jsonify({"status": "error", "error": str(e)}), 500
 
+# -----------------------------
+# Register Blueprints
+# -----------------------------
+app.register_blueprint(generate_bp)  # Gemini-based contract generator
+app.register_blueprint(support_bp)   # ✅ Community support feature
+
+# Serve uploaded files
+@app.route("/uploads/<path:filename>")
+def serve_uploads(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+# -----------------------------
+# Run the App
+# -----------------------------
 if __name__ == "__main__":
     try:
         app.run(debug=True)

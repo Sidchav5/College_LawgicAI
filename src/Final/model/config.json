@@ -1,0 +1,10 @@
+{
+  "model_name": "nlpaueb/legal-bert-base-uncased",
+  "max_length": 512,
+  "base_model_names": [
+    "optimized",
+    "lgb_diverse",
+    "xgb_diverse",
+    "rf_diverse"
+  ]
+}

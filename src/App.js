@@ -8,6 +8,8 @@ import Signup from "./components/Signup";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
 import AnalyseContract from "./components/AnalyseContract";
+import Generate from "./components/Generate";
+import Community from "./components/Community"
 function App() {
   return (
     <Router>
@@ -18,6 +20,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/analyse" element={<AnalyseContract />} />
+        <Route path="/generate" element={<Generate />} />
+         <Route path="/Community" element={<Community />} />
       </Routes>
     </Router>
   );
