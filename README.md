@@ -1,70 +1,197 @@
-# Getting Started with Create React App
+⚖️ Legal Contract Clause Analysis & Community Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An advanced AI-powered legal contract analysis system with integrated community support, AI-based contract generation, and user management — built using Flask (Python), React, MongoDB, and Gemini LLM.
 
-## Available Scripts
+🚀 Features
+🧠 Clause Risk Analysis
 
-In the project directory, you can run:
+Upload or paste full contract text or PDF.
 
-### `npm start`
+Uses LegalBERT, MNLI, and stacking models (XGBoost, SVM, Logistic Regression, RandomForest) to predict:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Clause-level risk classification → Low, Medium, or High.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Generates insights, confidence scores, and recommendations using Groq/Gemini API.
 
-### `npm test`
+📜 AI Contract Generator
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Create complete draft contracts using Gemini LLM.
 
-### `npm run build`
+Choose from contract types (e.g., Employment, NDA, Service, Partnership, etc.).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Fill in details through a dynamic form → instantly get an AI-generated, legally structured contract.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+🧩 Community Support
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Users can post questions and upload supporting contracts.
 
-### `npm run eject`
+Others can comment, like, and discuss directly.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+File attachments (PDF/DOC/TXT) stored securely and viewable in-browser.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Real-time interaction with JWT-based authentication.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+👤 User Authentication & Profile
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Secure signup/login using JWT tokens.
 
-## Learn More
+Update profile, password, or email.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Protected API endpoints ensure data safety.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+🧾 Tech Highlights
 
-### Code Splitting
+🔹 Flask REST API backend with modular blueprints
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+🔹 MongoDB for flexible data storage
 
-### Analyzing the Bundle Size
+🔹 React frontend with responsive UI
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+🔹 Integrated Groq/Gemini LLM for reasoning and text generation
 
-### Making a Progressive Web App
+🔹 File upload management and secure media serving
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+🔹 Role-based expansion possible (admin/moderator)
 
-### Advanced Configuration
+🏗️ Project Architecture
+project-root/
+│
+├── app.py                          # Flask entry point
+├── Final/
+│   └── analyze.py                  # Contract clause risk analysis logic
+│
+├── service/
+│   ├── Generate.py                 # AI contract generator service (Gemini)
+│   └── support.py                  # Community post & discussion service
+│
+├── uploads/
+│   └── community/                  # Stored uploaded files (contracts, attachments)
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── AnalyseContract.js
+│   │   │   ├── Generate.js
+│   │   │   └── Community.js
+│   │   └── styles/
+│   │       └── Community.css
+│   └── package.json
+│
+├── model/
+│   ├── stacking_model.pkl
+│   ├── label_encoder.pkl
+│   ├── feature_scaler.pkl
+│   ├── pca_model.pkl
+│   └── top_features.json
+│
+├── .env                            # Environment variables
+├── requirements.txt
+└── README.md
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+⚙️ Setup Instructions
+1. Clone Repository
+git clone https://github.com/yourusername/legal-contract-ai.git
+cd legal-contract-ai
 
-### Deployment
+2. Backend Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Create a Python virtual environment and install dependencies:
 
-### `npm run build` fails to minify
+python -m venv venv
+source venv/bin/activate  # (Windows: venv\Scripts\activate)
+pip install -r requirements.txt
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+3. Environment Variables (.env)
+SECRET_KEY=your_secret_key
+MONGO_URI=your_mongodb_connection_uri
+MONGO_DB=your_database_name
+GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=your_gemini_api_key
+
+4. Run Flask Server
+python app.py
+
+
+The server runs at http://127.0.0.1:5000
+
+5. Frontend Setup
+cd frontend
+npm install
+npm start
+
+
+Runs at http://localhost:3000
+
+🧩 API Endpoints Overview
+🔐 Authentication
+Method	Endpoint	Description
+POST	/signup	Register new user
+POST	/login	Login and get JWT token
+GET	/profile	Fetch user profile (JWT required)
+PUT	/update-profile	Update user details
+📊 Contract Analysis
+Method	Endpoint	Description
+POST	/api/analyze-text	Analyze contract text
+POST	/api/analyze-pdf	Analyze uploaded PDF
+🪄 Contract Generator
+Method	Endpoint	Description
+POST	/api/generate-contract	Generate contract using Gemini API
+💬 Community Support
+Method	Endpoint	Description
+POST	/api/community/post	Create new post
+GET	/api/community/posts	Fetch all posts
+POST	/api/community/comment/<post_id>	Add comment
+POST	/api/community/like/<post_id>	Like/unlike post
+GET	/api/community/uploads/<filename>	View attachment
+DELETE	/api/community/post/<post_id>	Delete post
+🧠 Machine Learning Model Stack
+Component	Model Used	Purpose
+Embeddings	LegalBERT / RoBERTa-MNLI	Contextual clause understanding
+Base Models	SVM, RandomForest, Logistic Regression	Base classification
+Meta Model	Stacking Ensemble (XGBoost)	Final risk classification
+Post-Processing	PCA + Feature Scaling	Dimensionality reduction
+LLM Layer	Groq/Gemini	Explainability & recommendations
+🧰 Dependencies
+
+Main Python Libraries:
+
+Flask
+Flask-Cors
+Flask-JWT-Extended
+pymongo
+certifi
+werkzeug
+transformers
+torch
+scikit-learn
+joblib
+pandas
+numpy
+google-generativeai (for Gemini)
+
+
+Frontend:
+
+React
+react-router-dom
+FontAwesome
+axios or fetch API
+
+📦 Future Improvements
+
+✅ Admin dashboard for moderation
+
+✅ Threaded discussions
+
+🔜 Contract clause visual comparison
+
+🔜 Email/notification system
+
+🔜 AI-suggested community responses
+
+🧑‍💻 Author
+
+Siddhesh Chavan
+📧 csiddhesh768@gmail.com
+
+🔗 Developer | AI + LegalTech | IoT + ML Integrations
