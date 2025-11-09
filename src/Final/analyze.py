@@ -235,68 +235,82 @@ def split_into_clauses(raw_text: str) -> List[str]:
 def adjust_risk_with_context(clause_text: str, predicted_risk: str, confidence: float) -> Tuple[str, float, str]:
     clause_lower = clause_text.lower()
     
-    protective_terms = [
-        'written notice', 'opportunity to improve', 'warning', 'cure period',
-        'reasonable notice', 'due process', 'performance improvement',
-        'with cause', 'mutual termination', 'severance pay', 'days notice',
-        'after receiving', 'opportunity to', 'standards after'
+    # Tenant-protective / common rental clause terms
+    tenant_protective = [
+        'written notice', 'one month', "one month's", '30 days', '30-day', 'security deposit',
+        'refundable', 'refund within', 'major structural repairs', 'property taxes',
+        'reasonable notice', 'quiet enjoyment', 'residential purposes', 'normal wear and tear',
+        'maintenance', 'repair', 'repair costs', 'deduct from the security', 'vacate'
     ]
     
-    aggressive_terms = [
-        'immediately without', 'without notice', 'without cause',
-        'no severance', 'waive all', 'unlimited liability', 'no compensation',
-        'forfeit', 'five (5) years', 'five years', 'entire country',
-        'all of india', 'personally liable for any and all'
+    # Landlord-favourable / aggressive terms
+    landlord_favourable = [
+        'forfeit', 'forfeited', 'immediately without', 'without notice', 'without refund',
+        'no refund', 'no liability', 'terminate immediately', 'evict', 'eviction',
+        'personal liability', 'absolute', 'irrevocable', 'waive all', 'penalty', 'late fee'
     ]
     
-    protective_count = sum(1 for term in protective_terms if term in clause_lower)
-    aggressive_count = sum(1 for term in aggressive_terms if term in clause_lower)
+    # Topic-specific buckets for finer checks
+    deposit_terms = ['security deposit', 'deposit', '₹', 'rupees', 'refund within', 'forfeit']
+    notice_terms = ['written notice', 'one month', '30 days', '24 hours', 'prior notice', 'without notice']
+    entry_terms = ['enter', 'inspection', '24 hours prior notice', 'emergency entry', 'safety hazards', 'water leak', 'gas leak']
+    utilities_terms = ['electricity', 'water', 'gas', 'internet', 'utilities', 'maintenance charges']
+    termination_terms = ['terminate', 'termination', 'vacate', 'vacates', 'default', 'rent default', 'two months']
+    repair_terms = ['repair', 'repairs', 'maintenance', 'structural', 'wear and tear', 'damage beyond']
+    sublet_terms = ['sublet', 'subletting', 'assign', 'consent', 'permission']
+    jurisdiction_terms = ['arbitration', 'arbitration and conciliation act', 'governed by', 'jurisdiction', 'courts', 'mumbai']
+    payment_terms = ['monthly rent', 'payable on or before', 'due date', 'bank transfer', 'designated account', 'late fee']
+    
+    # counts
+    protective_count = sum(1 for term in tenant_protective if term in clause_lower)
+    aggressive_count = sum(1 for term in landlord_favourable if term in clause_lower)
+    deposit_count = sum(1 for term in deposit_terms if term in clause_lower)
+    notice_count = sum(1 for term in notice_terms if term in clause_lower)
+    entry_count = sum(1 for term in entry_terms if term in clause_lower)
+    utilities_count = sum(1 for term in utilities_terms if term in clause_lower)
+    termination_count = sum(1 for term in termination_terms if term in clause_lower)
+    repair_count = sum(1 for term in repair_terms if term in clause_lower)
+    sublet_count = sum(1 for term in sublet_terms if term in clause_lower)
+    jurisdiction_count = sum(1 for term in jurisdiction_terms if term in clause_lower)
+    payment_count = sum(1 for term in payment_terms if term in clause_lower)
     
     adjustment_note = ""
     adjusted_risk = predicted_risk
     adjusted_confidence = confidence
     
-    # Rule 1: High + protective terms = likely false positive
-    if predicted_risk == 'High' and confidence > 0.90 and protective_count >= 2 and aggressive_count == 0:
-        if 'terminate' in clause_lower or 'termination' in clause_lower:
-            if any(term in clause_lower for term in ['notice', 'warning', 'opportunity', 'cure']):
-                adjusted_risk = 'Medium'
-                adjusted_confidence = 0.70
-                adjustment_note = f"Downgraded from High (model over-sensitive to 'terminate' keyword, found {protective_count} protective terms)"
+    # Example rules using these new buckets:
+    # Deposit + refundable language => likely lower risk
+    if deposit_count > 0 and 'refundable' in clause_lower and 'forfeit' not in clause_lower:
+        if adjusted_risk in ['Medium', 'High']:
+            adjusted_risk = 'Low'
+            adjusted_confidence = max(adjusted_confidence, 0.80)
+            adjustment_note = "Clause mentions refundable deposit — tenant protection"
     
-    # Rule 2: Probation with notice
-    if predicted_risk == 'High' and 'probation' in clause_lower:
-        if any(term in clause_lower for term in ['thirty', '30', 'days notice', 'written notice']):
-            if 'immediately' not in clause_lower:
-                adjusted_risk = 'Low'
-                adjusted_confidence = 0.75
-                adjustment_note = "Standard probation clause with notice period"
+    # Immediate eviction / forfeit language => raise risk
+    if any(w in clause_lower for w in ['forfeit', 'forfeited', 'terminate immediately', 'without notice']):
+        adjusted_risk = 'High'
+        adjusted_confidence = min(0.99, max(adjusted_confidence, 0.90))
+        adjustment_note = "Strong landlord-favourable language (forfeit/termination without notice)"
     
-    # Rule 3: Performance improvement
-    if predicted_risk == 'High' and confidence > 0.95:
-        if 'ninety' in clause_lower or '90' in clause_lower:
-            if 'improve' in clause_lower or 'performance' in clause_lower:
-                adjusted_risk = 'Low'
-                adjusted_confidence = 0.80
-                adjustment_note = "Protective clause with improvement period"
+    # Emergency entry allowed but with notice elsewhere => medium risk
+    if entry_count > 0 and 'emergency' in clause_lower and '24 hours' in clause_lower:
+        if adjusted_risk == 'High':
+            adjusted_risk = 'Medium'
+            adjusted_confidence = 0.75
+            adjustment_note = "Emergency entry allowed but 24-hour notice for inspections"
     
-    # Rule 4: Limited non-solicitation
-    if predicted_risk == 'High' and 'solicit' in clause_lower:
-        if any(term in clause_lower for term in ['twelve', '12', 'months']) and 'material contact' in clause_lower:
-            if 'five' not in clause_lower and 'years' not in clause_lower:
-                adjusted_risk = 'Medium'
-                adjusted_confidence = 0.75
-                adjustment_note = "Limited non-solicitation clause (reasonable scope)"
+    # Standard utilities/repair mentions => lower risk
+    if (utilities_count > 0 or repair_count > 0 or payment_count > 0) and aggressive_count == 0:
+        if adjusted_risk in ['Medium', 'High']:
+            adjusted_risk = 'Low'
+            adjusted_confidence = 0.80
+            adjustment_note = "Standard rent/utilities/repair language detected"
     
-    # Rule 5: Standard benefits
-    if predicted_risk in ['Medium', 'High']:
-        if any(term in clause_lower for term in ['salary', 'annual leave', 'sick leave', 'public holidays']):
-            if aggressive_count == 0:
-                adjusted_risk = 'Low'
-                adjusted_confidence = 0.85
-                adjustment_note = "Standard compensation/benefits clause"
+    # Arbitration / jurisdiction clauses reduce ambiguity but note applicability
+    if jurisdiction_count > 0:
+        adjustment_note = (adjustment_note + " " if adjustment_note else "") + "Contains arbitration/jurisdiction clause"
     
-    # Rule 6: Confirm dangerous
+    # fallback: keep existing aggressive confirmation
     if aggressive_count >= 2:
         if adjusted_risk != 'High':
             adjusted_risk = 'High'

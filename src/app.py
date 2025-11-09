@@ -204,7 +204,8 @@ def serve_uploads(filename):
 # -----------------------------
 if __name__ == "__main__":
     try:
-        app.run(debug=True)
+        # Use stat reloader instead of watchdog to avoid PyTorch file watching issues
+        app.run(debug=True, use_reloader=True, reloader_type='stat')
     except Exception as e:
         print("Server crashed with exception:", e)
         print(traceback.format_exc())
