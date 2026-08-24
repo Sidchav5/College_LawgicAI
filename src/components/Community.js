@@ -31,6 +31,7 @@ export default function Community() {
     // Fetch user info and posts
     fetchUserInfo();
     fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, navigate]);
 
   // Fetch current user info
