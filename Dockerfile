@@ -19,9 +19,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy python dependencies list
 COPY src/requirements.txt .
 
-# Upgrade pip and install Python packages + gunicorn for production serving
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu && \
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
+
+# Step 1: Install CPU-only PyTorch first to prevent peak disk/RAM spikes
+RUN pip install --no-cache-dir torch==2.0.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Step 2: Install remaining packages and gunicorn
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir gunicorn
 
 # Pre-download NLTK data to avoid runtime network calls
