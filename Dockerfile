@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir torch==2.0.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Step 2: Install Web, Auth & DB dependencies + Google Generative AI
-RUN pip install --no-cache-dir flask==2.3.0 flask-cors==4.0.0 flask-jwt-extended==4.5.2 pymongo==4.5.0 werkzeug==2.3.0 python-dotenv==1.0.0 certifi==2023.7.22 requests==2.31.0 google-generativeai gunicorn
+RUN pip install --no-cache-dir flask==2.3.0 flask-cors==4.0.0 flask-jwt-extended==4.5.2 pymongo==4.5.0 werkzeug==2.3.8 python-dotenv==1.0.0 certifi==2023.7.22 requests==2.31.0 google-generativeai gunicorn
 
 # Step 3: Install PDF parsing & text utilities
 RUN pip install --no-cache-dir nltk==3.8.1 pdfplumber==0.9.0 PyPDF2==3.0.1 joblib==1.3.1
