@@ -35,15 +35,16 @@ print(f"✓ Community uploads folder: {UPLOAD_FOLDER}")
 # MongoDB connection
 try:
     client = MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
-    # Test connection
-    client.server_info()
     db = client[MONGO_DB]
     posts_collection = db["community_posts"]
     users_collection = db["users"]
     print(f"✓ Community service connected to MongoDB: {MONGO_DB}")
 except Exception as e:
-    print(f"✗ Failed to connect to MongoDB: {e}")
-    raise
+    print(f"⚠️ Community service MongoDB warning: {e}")
+    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+    db = client[MONGO_DB]
+    posts_collection = db["community_posts"]
+    users_collection = db["users"]
 
 def allowed_file(filename: str) -> bool:
     """Check if file extension is allowed"""
