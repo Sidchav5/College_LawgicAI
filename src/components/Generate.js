@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./Generate.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import API_BASE_URL from "../config";
 
 function Generate() {
   const [contractType, setContractType] = useState("");
@@ -104,7 +105,7 @@ function Generate() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://127.0.0.1:5000/api/generate-contract", {
+      const response = await fetch(`${API_BASE_URL}/api/generate-contract`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

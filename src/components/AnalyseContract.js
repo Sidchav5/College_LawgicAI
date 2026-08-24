@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "./AnalyseContract.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import API_BASE_URL from "../config";
 
 function AnalyseContract() {
   const [text, setText] = useState("");
@@ -53,7 +54,7 @@ function AnalyseContract() {
     setError("");
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://127.0.0.1:5000/api/analyze-text", {
+      const response = await fetch(`${API_BASE_URL}/api/analyze-text`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -118,7 +119,7 @@ function AnalyseContract() {
     
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://127.0.0.1:5000/api/analyze-pdf", {
+      const response = await fetch(`${API_BASE_URL}/api/analyze-pdf`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

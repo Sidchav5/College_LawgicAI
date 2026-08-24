@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Profile.css"
 import Navbar from "./Navbar"
+import API_BASE_URL from "../config"
 function Profile() {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({});
@@ -20,7 +21,7 @@ function Profile() {
     }
 
     setIsLoading(true);
-    fetch("http://127.0.0.1:5000/profile", {
+    fetch(`${API_BASE_URL}/profile`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -78,7 +79,7 @@ function Profile() {
     
     setIsSaving(true);
     const token = localStorage.getItem("token");
-    fetch("http://127.0.0.1:5000/update-profile", {
+    fetch(`${API_BASE_URL}/update-profile`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

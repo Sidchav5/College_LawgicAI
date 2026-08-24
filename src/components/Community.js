@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Community.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import API_BASE_URL from "../config";
 export default function Community() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ title: "", content: "" });
@@ -35,7 +36,7 @@ export default function Community() {
   // Fetch current user info
   const fetchUserInfo = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/profile", {
+      const res = await fetch(`${API_BASE_URL}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -60,7 +61,7 @@ export default function Community() {
     setError("");
     
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/community/posts", {
+      const res = await fetch(`${API_BASE_URL}/api/community/posts`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -119,7 +120,7 @@ export default function Community() {
         hasFile: !!selectedFile 
       });
 
-      const res = await fetch("http://127.0.0.1:5000/api/community/post", {
+      const res = await fetch(`${API_BASE_URL}/api/community/post`, {
         method: "POST",
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -160,7 +161,7 @@ export default function Community() {
     if (!text) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/community/comment/${postId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/community/comment/${postId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -197,7 +198,7 @@ export default function Community() {
   // Handle like post
   const handleLike = async (postId) => {
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/community/like/${postId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/community/like/${postId}`, {
         method: "POST",
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -482,7 +483,7 @@ export default function Community() {
                     {post.fileUrl && (
                       <div className="post-attachment">
                         <a 
-                          href={`http://127.0.0.1:5000${post.fileUrl}`} 
+                          href={`${API_BASE_URL}${post.fileUrl}`} 
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className="file-link"

@@ -1,0 +1,12 @@
+node_modules
+build
+.git
+.gitignore
+*.md
+.env
+.env.local
+*.csv
+*.pdf
+*.xls
+uploads/*
+!uploads/.gitkeep
