@@ -21,7 +21,7 @@ COPY src/requirements.txt .
 
 # Upgrade pip and install Python packages + gunicorn for production serving
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir gunicorn
 
 # Pre-download NLTK data to avoid runtime network calls
