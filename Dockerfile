@@ -32,7 +32,7 @@ RUN pip install --no-cache-dir flask==2.3.0 flask-cors==4.0.0 flask-jwt-extended
 RUN pip install --no-cache-dir nltk==3.8.1 pdfplumber==0.9.0 PyPDF2==3.0.1 joblib==1.3.1
 
 # Step 4: Install Machine Learning & Data Science packages
-RUN pip install --no-cache-dir numpy==1.26.4 pandas==2.0.3 scikit-learn==1.2.2 lightgbm==4.0.0 xgboost==1.4.2 transformers==4.30.0
+RUN pip install --no-cache-dir numpy==1.26.4 pandas==2.0.3 scikit-learn==1.6.1 lightgbm==4.0.0 xgboost==1.7.6 transformers==4.30.0
 
 # Pre-download NLTK data to avoid runtime network calls
 RUN python -c "import nltk; nltk.download('punkt', quiet=True)"

@@ -26,6 +26,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from transformers import AutoTokenizer, AutoModel
 
+# --- MONKEY PATCH FOR XGBOOST 1.7.x COMPATIBILITY ---
+# XGBoost 1.7 removed use_label_encoder and throws AttributeError if accessed by old pickled models.
+# We overwrite the property with a static attribute so unpickling works flawlessly.
+if hasattr(xgb.XGBClassifier, 'use_label_encoder'):
+    xgb.XGBClassifier.use_label_encoder = False
+
 # ----------------------------- Groq API key -----------------------------
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 if not GROQ_API_KEY:
