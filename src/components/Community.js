@@ -1,9 +1,11 @@
+// Community.js
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Community.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import API_BASE_URL from "../config";
+
 export default function Community() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ title: "", content: "" });
@@ -16,25 +18,22 @@ export default function Community() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedPost, setExpandedPost] = useState(null);
   const [currentUser, setCurrentUser] = useState("");
+  const [showComments, setShowComments] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  
+
   const token = localStorage.getItem("token");
 
-  // Check authentication on mount
   useEffect(() => {
     if (!token) {
       setError("Please log in to access the community");
       setTimeout(() => navigate("/login"), 2000);
       return;
     }
-
-    // Fetch user info and posts
     fetchUserInfo();
     fetchPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, navigate]);
 
-  // Fetch current user info
   const fetchUserInfo = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/profile`, {
@@ -42,14 +41,12 @@ export default function Community() {
       });
       const data = await res.json();
       if (res.ok) {
-        // Store username from profile
         const username = data.name || data.email?.split('@')[0] || "User";
         setCurrentUser(username);
         localStorage.setItem("username", username);
       }
     } catch (err) {
       console.error("Error fetching user info:", err);
-      // Fallback to stored username or email
       const fallback = localStorage.getItem("username") || 
                       localStorage.getItem("email")?.split('@')[0] || 
                       "User";
@@ -60,10 +57,10 @@ export default function Community() {
   const fetchPosts = async () => {
     setLoading(true);
     setError("");
-    
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/community/posts`, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
@@ -76,7 +73,6 @@ export default function Community() {
       }
 
       const data = await res.json();
-      console.log("Fetched posts:", data);
 
       if (data.success) {
         setPosts(data.posts || []);
@@ -91,59 +87,44 @@ export default function Community() {
     }
   };
 
-  // Handle new post
   const handlePostSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setError("");
-    
-    // Validation
+
     if (!newPost.title.trim()) {
       setError("Please enter a post title");
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
     if (!newPost.content.trim()) {
       setError("Please enter post content");
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
-    
+
     const formData = new FormData();
     formData.append("title", newPost.title.trim());
     formData.append("content", newPost.content.trim());
     if (selectedFile) formData.append("file", selectedFile);
 
     try {
-      console.log("Submitting post:", { 
-        title: newPost.title, 
-        contentLength: newPost.content.length,
-        hasFile: !!selectedFile 
-      });
-
       const res = await fetch(`${API_BASE_URL}/api/community/post`, {
         method: "POST",
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          // Don't set Content-Type for FormData - browser sets it with boundary
         },
         body: formData,
       });
 
       const data = await res.json();
-      console.log("Post response:", data);
 
       if (data.success) {
         setNewPost({ title: "", content: "" });
         setSelectedFile(null);
-        
-        // Add new post to the top of the list
         setPosts([data.post, ...posts]);
-        
         setSuccess("Post created successfully!");
         setTimeout(() => setSuccess(""), 3000);
-        
-        // Scroll to top to see the new post
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setError(data.error || "Failed to create post");
@@ -152,11 +133,10 @@ export default function Community() {
       console.error("Error creating post:", err);
       setError("Failed to create post: " + err.message);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  // Handle comment submit
   const handleComment = async (postId) => {
     const text = commentText[postId]?.trim();
     if (!text) return;
@@ -172,17 +152,13 @@ export default function Community() {
       });
 
       const data = await res.json();
-      
+
       if (data.success) {
-        // Update the post with new comments
         const updatedPosts = posts.map((p) =>
           p._id === postId ? { ...p, comments: data.comments } : p
         );
         setPosts(updatedPosts);
-        
-        // Clear comment input
         setCommentText({ ...commentText, [postId]: "" });
-        
         setSuccess("Comment added!");
         setTimeout(() => setSuccess(""), 2000);
       } else {
@@ -196,29 +172,27 @@ export default function Community() {
     }
   };
 
-  // Handle like post
   const handleLike = async (postId) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/community/like/${postId}`, {
         method: "POST",
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
       });
 
       const data = await res.json();
-      
+
       if (data.success) {
-        // Update the specific post with new like count and status
         const updatedPosts = posts.map((p) =>
-          p._id === postId 
-            ? { 
-                ...p, 
-                likes: data.likes, 
+          p._id === postId
+            ? {
+                ...p,
+                likes: data.likes,
                 likes_count: data.likes,
-                liked: data.liked 
-              } 
+                liked: data.liked
+              }
             : p
         );
         setPosts(updatedPosts);
@@ -228,29 +202,24 @@ export default function Community() {
     }
   };
 
-  // Filter posts based on active tab and search
+  const toggleComments = (postId) => {
+    setShowComments({
+      ...showComments,
+      [postId]: !showComments[postId]
+    });
+  };
+
   const filteredPosts = posts.filter(post => {
-    // Search filter
-    const matchesSearch = 
+    const matchesSearch =
       post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.content?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Tab filter
+
     if (activeTab === "my-posts") {
-      // Compare with current user's username
       return matchesSearch && post.author === currentUser;
     }
-    
     return matchesSearch;
   });
 
-  // Clear messages
-  const clearMessages = () => {
-    setError("");
-    setSuccess("");
-  };
-
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown date";
     try {
@@ -266,25 +235,29 @@ export default function Community() {
     }
   };
 
-  // Handle file upload
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Check file size (16MB limit)
-      if (file.size > 16 * 1024 * 1024) {
-        setError("File size must be less than 16MB");
-        setTimeout(() => setError(""), 3000);
-        return;
-      }
-      setSelectedFile(file);
-    }
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name.charAt(0).toUpperCase();
+  };
+
+  const getRandomColor = (name) => {
+    const colors = [
+      '#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b',
+      '#fa709a', '#fee140', '#a18cd1', '#fbc2eb', '#8ec5fc'
+    ];
+    const index = name?.length % colors.length || 0;
+    return colors[index];
   };
 
   return (
     <>
       <Navbar />
       <div className="community-container">
+        {/* Header */}
         <div className="community-header">
+          <div className="header-badge">
+            <span>Community</span>
+          </div>
           <h1 className="community-title">Community Support</h1>
           <p className="community-subtitle">
             Connect with other legal professionals, share experiences, and get help with contract-related questions
@@ -295,15 +268,15 @@ export default function Community() {
         {error && (
           <div className="message-banner error">
             <i className="fas fa-exclamation-circle"></i>
-            {error}
-            <button className="close-btn" onClick={clearMessages}>×</button>
+            <span>{error}</span>
+            <button className="close-btn" onClick={() => setError("")}>×</button>
           </div>
         )}
         {success && (
           <div className="message-banner success">
             <i className="fas fa-check-circle"></i>
-            {success}
-            <button className="close-btn" onClick={clearMessages}>×</button>
+            <span>{success}</span>
+            <button className="close-btn" onClick={() => setSuccess("")}>×</button>
           </div>
         )}
 
@@ -323,11 +296,11 @@ export default function Community() {
                     onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
                     required
                     maxLength={100}
-                    disabled={loading}
+                    disabled={isSubmitting}
                   />
                   <span className="char-count">{newPost.title.length}/100</span>
                 </div>
-                
+
                 <div className="form-group">
                   <textarea
                     placeholder="Describe your legal issue, contract question, or share your experience..."
@@ -336,8 +309,8 @@ export default function Community() {
                     required
                     rows="4"
                     maxLength={1000}
-                    disabled={loading}
-                  ></textarea>
+                    disabled={isSubmitting}
+                  />
                   <span className="char-count">{newPost.content.length}/1000</span>
                 </div>
 
@@ -348,9 +321,17 @@ export default function Community() {
                     <input
                       type="file"
                       accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png"
-                      onChange={handleFileChange}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file && file.size > 16 * 1024 * 1024) {
+                          setError("File size must be less than 16MB");
+                          setTimeout(() => setError(""), 3000);
+                          return;
+                        }
+                        setSelectedFile(file);
+                      }}
                       className="file-input"
-                      disabled={loading}
+                      disabled={isSubmitting}
                     />
                   </label>
                   {selectedFile && (
@@ -360,11 +341,11 @@ export default function Community() {
                       <span className="file-size">
                         ({(selectedFile.size / 1024).toFixed(1)} KB)
                       </span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="remove-file"
                         onClick={() => setSelectedFile(null)}
-                        disabled={loading}
+                        disabled={isSubmitting}
                       >
                         ×
                       </button>
@@ -372,12 +353,12 @@ export default function Community() {
                   )}
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="submit-post-btn"
-                  disabled={loading || !newPost.title.trim() || !newPost.content.trim()}
+                  disabled={isSubmitting || !newPost.title.trim() || !newPost.content.trim()}
                 >
-                  {loading ? (
+                  {isSubmitting ? (
                     <>
                       <i className="fas fa-spinner fa-spin"></i> Posting...
                     </>
@@ -395,20 +376,20 @@ export default function Community() {
           <div className="posts-section">
             <div className="posts-header">
               <div className="tabs">
-                <button 
+                <button
                   className={`tab ${activeTab === "all" ? "active" : ""}`}
                   onClick={() => setActiveTab("all")}
                 >
                   <i className="fas fa-globe"></i> All Posts ({posts.length})
                 </button>
-                <button 
+                <button
                   className={`tab ${activeTab === "my-posts" ? "active" : ""}`}
                   onClick={() => setActiveTab("my-posts")}
                 >
                   <i className="fas fa-user"></i> My Posts ({posts.filter(p => p.author === currentUser).length})
                 </button>
               </div>
-              
+
               <div className="search-box">
                 <i className="fas fa-search"></i>
                 <input
@@ -430,9 +411,9 @@ export default function Community() {
                 <i className="fas fa-comments"></i>
                 <h3>No posts found</h3>
                 <p>
-                  {activeTab === "my-posts" 
-                    ? "You haven't created any posts yet. Create one above!" 
-                    : searchTerm 
+                  {activeTab === "my-posts"
+                    ? "You haven't created any posts yet. Create one above!"
+                    : searchTerm
                     ? "No posts match your search. Try different keywords."
                     : "Be the first to start a discussion!"}
                 </p>
@@ -443,24 +424,30 @@ export default function Community() {
                   <div key={post._id} className="post-card">
                     <div className="post-header">
                       <div className="post-meta">
-                        <h3 className="post-title">{post.title}</h3>
-                        <div className="post-info">
-                          <span className="author">
-                            <i className="fas fa-user"></i> {post.author || "Anonymous"}
-                          </span>
-                          <span className="date">
-                            <i className="fas fa-clock"></i> {formatDate(post.createdAt)}
-                          </span>
+                        <div className="post-author-avatar">
+                          <div 
+                            className="avatar"
+                            style={{ background: getRandomColor(post.author) }}
+                          >
+                            {getInitials(post.author)}
+                          </div>
+                          <div className="post-author-info">
+                            <span className="post-author">{post.author || "Anonymous"}</span>
+                            <span className="post-date">
+                              <i className="fas fa-clock"></i> {formatDate(post.createdAt)}
+                            </span>
+                          </div>
                         </div>
+                        <h3 className="post-title">{post.title}</h3>
                       </div>
                       <div className="post-actions">
-                        <button 
+                        <button
                           className={`like-btn ${post.liked ? "liked" : ""}`}
                           onClick={() => handleLike(post._id)}
                           title={post.liked ? "Unlike" : "Like"}
                         >
-                          <i className={`fas fa-heart${post.liked ? '' : '-o'}`}></i> 
-                          {post.likes_count || post.likes || 0}
+                          <i className={`fas fa-heart${post.liked ? '' : '-o'}`}></i>
+                          <span>{post.likes_count || post.likes || 0}</span>
                         </button>
                       </div>
                     </div>
@@ -472,7 +459,7 @@ export default function Community() {
                           : `${post.content.substring(0, 200)}...`}
                       </p>
                       {post.content.length > 200 && (
-                        <button 
+                        <button
                           className="read-more"
                           onClick={() => setExpandedPost(expandedPost === post._id ? null : post._id)}
                         >
@@ -483,10 +470,10 @@ export default function Community() {
 
                     {post.fileUrl && (
                       <div className="post-attachment">
-                        <a 
-                          href={`${API_BASE_URL}${post.fileUrl}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href={`${API_BASE_URL}${post.fileUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="file-link"
                         >
                           <i className="fas fa-paperclip"></i>
@@ -495,60 +482,74 @@ export default function Community() {
                       </div>
                     )}
 
-                    <div className="comments-section">
-                      <div className="comments-header">
-                        <h4>
-                          <i className="fas fa-comments"></i> 
-                          Comments {post.comments?.length ? `(${post.comments.length})` : ""}
-                        </h4>
-                      </div>
-
-                      <div className="comments-list">
-                        {post.comments && post.comments.length > 0 ? (
-                          post.comments.map((comment, index) => (
-                            <div key={index} className="comment">
-                              <div className="comment-header">
-                                <strong className="comment-author">
-                                  {comment.user || "Anonymous"}
-                                </strong>
-                                <span className="comment-date">
-                                  {formatDate(comment.createdAt)}
-                                </span>
-                              </div>
-                              <p className="comment-text">{comment.text}</p>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="no-comments">No comments yet. Be the first to comment!</p>
-                        )}
-                      </div>
-
-                      <div className="comment-box">
-                        <input
-                          type="text"
-                          placeholder="Write a comment..."
-                          value={commentText[post._id] || ""}
-                          onChange={(e) => setCommentText({
-                            ...commentText,
-                            [post._id]: e.target.value
-                          })}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleComment(post._id);
-                            }
-                          }}
-                          maxLength={1000}
-                        />
-                        <button 
-                          onClick={() => handleComment(post._id)}
-                          disabled={!commentText[post._id]?.trim()}
-                          title="Post comment"
-                        >
-                          <i className="fas fa-paper-plane"></i>
-                        </button>
-                      </div>
+                    <div className="post-footer">
+                      <button
+                        className="comments-toggle"
+                        onClick={() => toggleComments(post._id)}
+                      >
+                        <i className="fas fa-comments"></i>
+                        {post.comments?.length || 0} Comments
+                        <i className={`fas fa-chevron-${showComments[post._id] ? 'up' : 'down'}`}></i>
+                      </button>
                     </div>
+
+                    {showComments[post._id] && (
+                      <div className="comments-section">
+                        <div className="comments-list">
+                          {post.comments && post.comments.length > 0 ? (
+                            post.comments.map((comment, index) => (
+                              <div key={index} className="comment">
+                                <div className="comment-header">
+                                  <div className="comment-author-info">
+                                    <div 
+                                      className="comment-avatar"
+                                      style={{ background: getRandomColor(comment.user) }}
+                                    >
+                                      {getInitials(comment.user)}
+                                    </div>
+                                    <strong className="comment-author">
+                                      {comment.user || "Anonymous"}
+                                    </strong>
+                                  </div>
+                                  <span className="comment-date">
+                                    {formatDate(comment.createdAt)}
+                                  </span>
+                                </div>
+                                <p className="comment-text">{comment.text}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="no-comments">No comments yet. Be the first to comment!</p>
+                          )}
+                        </div>
+
+                        <div className="comment-box">
+                          <input
+                            type="text"
+                            placeholder="Write a comment..."
+                            value={commentText[post._id] || ""}
+                            onChange={(e) => setCommentText({
+                              ...commentText,
+                              [post._id]: e.target.value
+                            })}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleComment(post._id);
+                              }
+                            }}
+                            maxLength={1000}
+                          />
+                          <button
+                            onClick={() => handleComment(post._id)}
+                            disabled={!commentText[post._id]?.trim()}
+                            title="Post comment"
+                          >
+                            <i className="fas fa-paper-plane"></i>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -556,7 +557,7 @@ export default function Community() {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 }

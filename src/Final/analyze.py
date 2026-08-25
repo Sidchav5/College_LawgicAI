@@ -212,24 +212,142 @@ def normalize_spaces(s: str) -> str:
     s = re.sub(r"\s+\n", "\n", s)
     return s.strip()
 
-def split_into_clauses(raw_text: str) -> List[str]:
-    text = clean_text(raw_text)
+def split_into_clauses_regex(text: str) -> List[str]:
+    """Original rule-based fallback: split on blank lines, filter short blocks."""
     clauses = re.split(r'\n\s*\n+', text.strip())
-    
     valid_clauses = []
     for clause in clauses:
         clause = normalize_spaces(clause)
         if len(clause) >= 40:
             valid_clauses.append(clause)
-    
     seen = set()
     unique_clauses = []
     for clause in valid_clauses:
         if clause not in seen:
             seen.add(clause)
             unique_clauses.append(clause)
-    
     return unique_clauses
+
+
+def split_into_clauses_with_llm(text: str) -> List[str]:
+    """
+    Use Groq LLM to intelligently identify real contract clause boundaries.
+    Strips preamble, party info, signatures, and headings-only lines.
+    Falls back to regex splitting if API is unavailable or returns bad output.
+    """
+    if not GROQ_API_KEY or not GROQ_API_AVAILABLE:
+        print("  [Clause Splitter] Groq unavailable — using regex fallback")
+        return split_into_clauses_regex(text)
+
+    # Truncate very long documents to stay within token limits (~12,000 chars)
+    truncated = text[:12000]
+    was_truncated = len(text) > 12000
+
+    system_prompt = (
+        "You are a legal document parser specialised in contract analysis. "
+        "Your only job is to extract the substantive legal clauses from a contract. "
+        "Rules: "
+        "1. EXCLUDE: title page, party names/addresses, recitals, 'IN WITNESS WHEREOF', "
+        "   signature blocks, witness sections, and any heading that appears alone with no body text. "
+        "2. INCLUDE: every numbered or unnumbered clause that imposes an obligation, right, "
+        "   restriction, or consequence on any party. "
+        "3. Merge a clause heading with its paragraph body into ONE entry. "
+        "4. Return ONLY a JSON array of strings — one string per clause — with no extra keys, "
+        "   commentary, or markdown fences. Example: [\"Clause text 1...\", \"Clause text 2...\"]"
+    )
+
+    user_prompt = (
+        f"Extract all substantive legal clauses from the contract below.\n"
+        f"{'(Note: document was truncated to 12000 chars for processing)' if was_truncated else ''}\n\n"
+        f"CONTRACT TEXT:\n{truncated}"
+    )
+
+    try:
+        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+
+        # Pick the best available model
+        resp = requests.get("https://api.groq.com/openai/v1/models", headers=headers, timeout=10)
+        resp.raise_for_status()
+        available_ids = [m["id"] for m in resp.json().get("data", [])]
+        preferred = [
+            "meta-llama/llama-3.3-70b-versatile",
+            "meta-llama/llama-3.1-70b-versatile",
+            "mixtral-8x7b-32768",
+            "llama-3.1-8b-instant",
+        ]
+        model_id = next((m for m in preferred if m in available_ids), available_ids[0] if available_ids else None)
+
+        if not model_id:
+            print("  [Clause Splitter] No Groq model found — using regex fallback")
+            return split_into_clauses_regex(text)
+
+        print(f"  [Clause Splitter] Using Groq model: {model_id}")
+
+        payload = {
+            "model": model_id,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.0,
+            "max_tokens": 4096,
+        }
+
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=60,
+        )
+        response.raise_for_status()
+        content = response.json()["choices"][0]["message"]["content"].strip()
+
+        # Strip markdown fences if model wrapped output
+        content = re.sub(r"^```[a-z]*\n?", "", content)
+        content = re.sub(r"\n?```$", "", content)
+        content = content.strip()
+
+        # Parse JSON array
+        clauses_raw = json.loads(content)
+        if not isinstance(clauses_raw, list):
+            raise ValueError("LLM did not return a JSON array")
+
+        # Clean and filter
+        clauses = []
+        seen = set()
+        for c in clauses_raw:
+            c = normalize_spaces(str(c))
+            if len(c) >= 40 and c not in seen:
+                seen.add(c)
+                clauses.append(c)
+
+        if not clauses:
+            print("  [Clause Splitter] LLM returned empty list — using regex fallback")
+            return split_into_clauses_regex(text)
+
+        print(f"  [Clause Splitter] ✓ LLM identified {len(clauses)} clauses")
+        return clauses
+
+    except json.JSONDecodeError as e:
+        print(f"  [Clause Splitter] JSON parse error: {e} — using regex fallback")
+        return split_into_clauses_regex(text)
+    except requests.exceptions.Timeout:
+        print("  [Clause Splitter] Groq timeout — using regex fallback")
+        return split_into_clauses_regex(text)
+    except Exception as e:
+        print(f"  [Clause Splitter] Error: {e} — using regex fallback")
+        return split_into_clauses_regex(text)
+
+
+def split_into_clauses(raw_text: str) -> List[str]:
+    """
+    Main entry point for clause splitting.
+    Uses Groq LLM when available; falls back to regex splitting.
+    Classification (model + keyword rules) is completely unchanged.
+    """
+    text = clean_text(raw_text)
+    return split_into_clauses_with_llm(text)
+
 
 # ----------------------------- Context-Aware Risk Adjustment -----------------------------
 def adjust_risk_with_context(clause_text: str, predicted_risk: str, confidence: float) -> Tuple[str, float, str]:

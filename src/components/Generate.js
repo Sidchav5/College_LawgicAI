@@ -1,3 +1,4 @@
+// Generate.js
 import React, { useState, useEffect } from "react";
 import "./Generate.css";
 import Navbar from "./Navbar";
@@ -13,6 +14,7 @@ function Generate() {
   const [success, setSuccess] = useState("");
   const [generationHistory, setGenerationHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [expandedFields, setExpandedFields] = useState(false);
 
   const contractOptions = [
     "Employment Agreement",
@@ -63,10 +65,9 @@ function Generate() {
       return false;
     }
 
-    // Basic validation for required fields
     const requiredFields = getRequiredFields();
     for (const field of requiredFields) {
-      if (!formData[field]) {
+      if (!formData[field] || !formData[field].trim()) {
         showMessage(`Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
@@ -118,7 +119,6 @@ function Generate() {
       
       if (response.ok) {
         setGeneratedContract(data.contract);
-        // Add to history
         const newGeneration = {
           id: Date.now(),
           type: contractType,
@@ -126,8 +126,9 @@ function Generate() {
           contract: data.contract,
           formData: { ...formData }
         };
-        setGenerationHistory(prev => [newGeneration, ...prev.slice(0, 9)]); // Keep last 10
+        setGenerationHistory(prev => [newGeneration, ...prev.slice(0, 9)]);
         showMessage("Contract generated successfully!", "success");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         showMessage(data.error || "Failed to generate contract");
       }
@@ -181,228 +182,129 @@ function Generate() {
     }
   };
 
+  const getContractTypeIcon = () => {
+    const icons = {
+      "Employment Agreement": "fa-user-tie",
+      "Non-Disclosure Agreement (NDA)": "fa-file-signature",
+      "Service Agreement": "fa-handshake",
+      "Lease Agreement": "fa-home",
+      "Freelancer Contract": "fa-laptop",
+      "Partnership Agreement": "fa-users",
+      "Consulting Agreement": "fa-chart-line",
+      "Sales Agreement": "fa-shopping-cart"
+    };
+    return icons[contractType] || "fa-file-contract";
+  };
+
   const renderDynamicFields = () => {
+    const renderField = (name, label, type = "text", placeholder = "", required = false, rows = null) => {
+      const value = formData[name] || "";
+      return (
+        <div className="form-group" key={name}>
+          <label>
+            {label} {required && <span className="required-star">*</span>}
+          </label>
+          {type === "textarea" ? (
+            <textarea
+              name={name}
+              value={value}
+              onChange={handleInputChange}
+              placeholder={placeholder}
+              rows={rows || 3}
+              required={required}
+            />
+          ) : type === "number" ? (
+            <input
+              type="number"
+              name={name}
+              value={value}
+              onChange={handleInputChange}
+              placeholder={placeholder}
+              required={required}
+              min="0"
+            />
+          ) : type === "date" ? (
+            <input
+              type="date"
+              name={name}
+              value={value}
+              onChange={handleInputChange}
+              required={required}
+            />
+          ) : (
+            <input
+              type="text"
+              name={name}
+              value={value}
+              onChange={handleInputChange}
+              placeholder={placeholder}
+              required={required}
+            />
+          )}
+        </div>
+      );
+    };
+
     switch (contractType) {
       case "Employment Agreement":
         return (
           <div className="fields-grid">
-            <div className="form-group">
-              <label>Employer Name *</label>
-              <input 
-                type="text" 
-                name="employer" 
-                value={formData.employer || ""}
-                onChange={handleInputChange} 
-                placeholder="Enter employer's legal name"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Employee Name *</label>
-              <input 
-                type="text" 
-                name="employee" 
-                value={formData.employee || ""}
-                onChange={handleInputChange} 
-                placeholder="Enter employee's full name"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Job Title *</label>
-              <input 
-                type="text" 
-                name="jobTitle" 
-                value={formData.jobTitle || ""}
-                onChange={handleInputChange} 
-                placeholder="Enter job title"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Start Date *</label>
-              <input 
-                type="date" 
-                name="startDate" 
-                value={formData.startDate || ""}
-                onChange={handleInputChange} 
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Salary</label>
-              <input 
-                type="text" 
-                name="salary" 
-                value={formData.salary || ""}
-                onChange={handleInputChange} 
-                placeholder="e.g., $50,000 annually"
-              />
-            </div>
-            <div className="form-group">
-              <label>Work Location</label>
-              <input 
-                type="text" 
-                name="workLocation" 
-                value={formData.workLocation || ""}
-                onChange={handleInputChange} 
-                placeholder="Enter work location"
-              />
-            </div>
+            {renderField("employer", "Employer Name", "text", "Enter employer's legal name", true)}
+            {renderField("employee", "Employee Name", "text", "Enter employee's full name", true)}
+            {renderField("jobTitle", "Job Title", "text", "Enter job title", true)}
+            {renderField("startDate", "Start Date", "date", "", true)}
+            {renderField("salary", "Salary", "text", "e.g., $50,000 annually")}
+            {renderField("workLocation", "Work Location", "text", "Enter work location")}
           </div>
         );
       case "Non-Disclosure Agreement (NDA)":
         return (
           <div className="fields-grid">
-            <div className="form-group">
-              <label>Disclosing Party *</label>
-              <input 
-                type="text" 
-                name="disclosingParty" 
-                value={formData.disclosingParty || ""}
-                onChange={handleInputChange} 
-                placeholder="Party sharing confidential information"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Receiving Party *</label>
-              <input 
-                type="text" 
-                name="receivingParty" 
-                value={formData.receivingParty || ""}
-                onChange={handleInputChange} 
-                placeholder="Party receiving confidential information"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Purpose *</label>
-              <input 
-                type="text" 
-                name="purpose" 
-                value={formData.purpose || ""}
-                onChange={handleInputChange} 
-                placeholder="Purpose of information sharing"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Duration (months) *</label>
-              <input 
-                type="number" 
-                name="duration" 
-                value={formData.duration || ""}
-                onChange={handleInputChange} 
-                min="1"
-                max="120"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Governing Law</label>
-              <input 
-                type="text" 
-                name="governingLaw" 
-                value={formData.governingLaw || ""}
-                onChange={handleInputChange} 
-                placeholder="e.g., State of California"
-              />
-            </div>
+            {renderField("disclosingParty", "Disclosing Party", "text", "Party sharing confidential information", true)}
+            {renderField("receivingParty", "Receiving Party", "text", "Party receiving confidential information", true)}
+            {renderField("purpose", "Purpose", "text", "Purpose of information sharing", true)}
+            {renderField("duration", "Duration (months)", "number", "Enter duration in months", true)}
+            {renderField("governingLaw", "Governing Law", "text", "e.g., State of California")}
           </div>
         );
       case "Service Agreement":
         return (
           <div className="fields-grid">
-            <div className="form-group">
-              <label>Client Name *</label>
-              <input 
-                type="text" 
-                name="client" 
-                value={formData.client || ""}
-                onChange={handleInputChange} 
-                placeholder="Enter client's legal name"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Service Provider *</label>
-              <input 
-                type="text" 
-                name="provider" 
-                value={formData.provider || ""}
-                onChange={handleInputChange} 
-                placeholder="Enter service provider's name"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Service Description *</label>
-              <textarea 
-                name="serviceDetails" 
-                value={formData.serviceDetails || ""}
-                onChange={handleInputChange} 
-                placeholder="Detailed description of services to be provided"
-                rows="3"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Payment Terms *</label>
-              <input 
-                type="text" 
-                name="paymentTerms" 
-                value={formData.paymentTerms || ""}
-                onChange={handleInputChange} 
-                placeholder="e.g., $1000 upon completion, net 30"
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Term of Agreement</label>
-              <input 
-                type="text" 
-                name="term" 
-                value={formData.term || ""}
-                onChange={handleInputChange} 
-                placeholder="e.g., 12 months from start date"
-              />
-            </div>
-            <div className="form-group">
-              <label>Termination Clause</label>
-              <textarea 
-                name="termination" 
-                value={formData.termination || ""}
-                onChange={handleInputChange} 
-                placeholder="Conditions for contract termination"
-                rows="2"
-              />
-            </div>
+            {renderField("client", "Client Name", "text", "Enter client's legal name", true)}
+            {renderField("provider", "Service Provider", "text", "Enter service provider's name", true)}
+            {renderField("serviceDetails", "Service Description", "textarea", "Detailed description of services", true, 3)}
+            {renderField("paymentTerms", "Payment Terms", "text", "e.g., $1000 upon completion", true)}
+            {renderField("term", "Term of Agreement", "text", "e.g., 12 months from start date")}
+            {renderField("termination", "Termination Clause", "textarea", "Conditions for contract termination", false, 2)}
           </div>
         );
       case "Lease Agreement":
         return (
           <div className="fields-grid">
-            <div className="form-group">
-              <label>Landlord Name *</label>
-              <input type="text" name="landlord" onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label>Tenant Name *</label>
-              <input type="text" name="tenant" onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label>Property Address *</label>
-              <textarea name="propertyAddress" onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label>Rent Amount *</label>
-              <input type="text" name="rentAmount" onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label>Lease Term *</label>
-              <input type="text" name="leaseTerm" onChange={handleInputChange} required />
-            </div>
+            {renderField("landlord", "Landlord Name", "text", "Enter landlord's legal name", true)}
+            {renderField("tenant", "Tenant Name", "text", "Enter tenant's full name", true)}
+            {renderField("propertyAddress", "Property Address", "textarea", "Full property address", true, 2)}
+            {renderField("rentAmount", "Rent Amount", "text", "e.g., $2,000 per month", true)}
+            {renderField("leaseTerm", "Lease Term", "text", "e.g., 12 months", true)}
+          </div>
+        );
+      case "Freelancer Contract":
+        return (
+          <div className="fields-grid">
+            {renderField("client", "Client Name", "text", "Enter client's name", true)}
+            {renderField("freelancer", "Freelancer Name", "text", "Enter freelancer's name", true)}
+            {renderField("projectDescription", "Project Description", "textarea", "Describe the project scope", true, 3)}
+            {renderField("deliverables", "Deliverables", "textarea", "List expected deliverables", true, 2)}
+            {renderField("paymentAmount", "Payment Amount", "text", "e.g., $5,000", true)}
+          </div>
+        );
+      case "Partnership Agreement":
+        return (
+          <div className="fields-grid">
+            {renderField("partner1", "Partner 1 Name", "text", "Enter first partner's name", true)}
+            {renderField("partner2", "Partner 2 Name", "text", "Enter second partner's name", true)}
+            {renderField("businessName", "Business Name", "text", "Enter business name", true)}
+            {renderField("profitSharing", "Profit Sharing", "text", "e.g., 50/50", true)}
           </div>
         );
       default:
@@ -419,7 +321,11 @@ function Generate() {
     <>
       <Navbar />
       <div className="generate-container">
+        {/* Header */}
         <div className="generate-header">
+          <div className="header-badge">
+            <span>AI-Powered Generation</span>
+          </div>
           <h1 className="generate-title">Generate Contract</h1>
           <p className="generate-subtitle">
             Select a contract type and fill in the required details to generate a professional draft
@@ -430,20 +336,22 @@ function Generate() {
         {error && (
           <div className="message-banner error">
             <i className="fas fa-exclamation-circle"></i>
-            {error}
+            <span>{error}</span>
+            <button className="close-btn" onClick={() => setError("")}>×</button>
           </div>
         )}
         {success && (
           <div className="message-banner success">
             <i className="fas fa-check-circle"></i>
-            {success}
+            <span>{success}</span>
+            <button className="close-btn" onClick={() => setSuccess("")}>×</button>
           </div>
         )}
 
         {showHistory ? (
           <div className="history-panel">
             <div className="history-header">
-              <h3>Generation History</h3>
+              <h3><i className="fas fa-history"></i> Generation History</h3>
               <button className="btn secondary" onClick={() => setShowHistory(false)}>
                 <i className="fas fa-arrow-left"></i> Back to Generator
               </button>
@@ -459,16 +367,23 @@ function Generate() {
                   {generationHistory.map((generation) => (
                     <div key={generation.id} className="history-item">
                       <div className="history-info">
-                        <div className="history-type">{generation.type}</div>
+                        <div className="history-type">
+                          <i className={`fas ${getContractTypeIcon()}`}></i>
+                          {generation.type}
+                        </div>
                         <div className="history-date">
+                          <i className="fas fa-clock"></i>
                           {new Date(generation.timestamp).toLocaleString()}
                         </div>
                         <div className="history-preview">
-                          {Object.entries(generation.formData).slice(0, 2).map(([key, value]) => (
+                          {Object.entries(generation.formData).slice(0, 3).map(([key, value]) => (
                             <span key={key} className="data-preview">
                               {key}: {value}
                             </span>
                           ))}
+                          {Object.entries(generation.formData).length > 3 && (
+                            <span className="data-preview more">+{Object.entries(generation.formData).length - 3} more</span>
+                          )}
                         </div>
                       </div>
                       <button 
@@ -485,15 +400,21 @@ function Generate() {
               <div className="empty-history">
                 <i className="fas fa-history"></i>
                 <p>No generation history yet</p>
+                <p className="empty-sub">Your generated contracts will appear here</p>
               </div>
             )}
           </div>
         ) : generatedContract ? (
           <div className="contract-result">
             <div className="result-header">
-              <h3>
-                <i className="fas fa-file-contract"></i> Generated Contract Draft
-              </h3>
+              <div>
+                <h3>
+                  <i className="fas fa-file-contract"></i> Generated Contract Draft
+                </h3>
+                <p className="result-subtitle">
+                  {contractType} • {new Date().toLocaleDateString()}
+                </p>
+              </div>
               <div className="result-actions">
                 <button className="btn secondary" onClick={copyToClipboard}>
                   <i className="fas fa-copy"></i> Copy
@@ -505,17 +426,12 @@ function Generate() {
                   <i className="fas fa-history"></i> History
                 </button>
                 <button className="btn primary" onClick={resetForm}>
-                  <i className="fas fa-plus"></i> Generate New
+                  <i className="fas fa-plus"></i> New Contract
                 </button>
               </div>
             </div>
             <div className="contract-content">
-              <textarea 
-                value={generatedContract} 
-                readOnly 
-                rows="25"
-                className="contract-textarea"
-              ></textarea>
+              <pre className="contract-textarea">{generatedContract}</pre>
             </div>
           </div>
         ) : (
@@ -539,10 +455,15 @@ function Generate() {
                   </div>
 
                   <div className="form-group">
-                    <label>Contract Type *</label>
+                    <label>
+                      Contract Type <span className="required-star">*</span>
+                    </label>
                     <select 
                       value={contractType} 
-                      onChange={(e) => setContractType(e.target.value)}
+                      onChange={(e) => {
+                        setContractType(e.target.value);
+                        setFormData({});
+                      }}
                       className="form-select"
                     >
                       <option value="">-- Select Contract Type --</option>
