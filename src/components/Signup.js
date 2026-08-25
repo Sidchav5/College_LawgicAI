@@ -126,19 +126,19 @@ function Signup() {
               <div className="auth-logo-glow"></div>
             </div>
             <div className="auth-logo-text">
-              <span className="auth-logo-name">AI Ergonomics</span>
-              <span className="auth-logo-tagline">Monitor</span>
+              <span className="auth-logo-name">Lawgic</span>
+              <span className="auth-logo-tagline">AI Legal Assistant</span>
             </div>
           </div>
 
           {/* Badge */}
           <div className="auth-badge">
             <Sparkles className="auth-badge-icon" />
-            <span>Free Trial</span>
+            <span>Get Started Free</span>
           </div>
 
           <h2 className="auth-title">Create Account</h2>
-          <p className="auth-subtitle">Join thousands of users improving their ergonomic health</p>
+          <p className="auth-subtitle">Join thousands of users getting AI-powered legal assistance</p>
 
           {/* Error Message */}
           {error && (
@@ -356,7 +356,7 @@ function Signup() {
             </div>
             <div className="trust-item">
               <Sparkles className="trust-item-icon" />
-              <span>Free 14-Day Trial</span>
+              <span>Free to Use</span>
             </div>
           </div>
         </div>

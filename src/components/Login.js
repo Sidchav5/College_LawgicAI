@@ -101,8 +101,8 @@ function Login() {
               <div className="auth-logo-glow"></div>
             </div>
             <div className="auth-logo-text">
-              <span className="auth-logo-name">AI Ergonomics</span>
-              <span className="auth-logo-tagline">Monitor</span>
+              <span className="auth-logo-name">Lawgic</span>
+              <span className="auth-logo-tagline">AI Legal Assistant</span>
             </div>
           </div>
 
@@ -113,7 +113,7 @@ function Login() {
           </div>
 
           <h2 className="auth-title">Welcome Back</h2>
-          <p className="auth-subtitle">Sign in to continue monitoring your ergonomic health</p>
+          <p className="auth-subtitle">Sign in to access your AI-powered legal assistant</p>
 
           {/* Error Message */}
           {error && (
