@@ -17,7 +17,7 @@ function Navbar() {
     <i className="fa-solid fa-utensils"></i> Lawgic
   </Link>
 </div>
-      <div className="nav-main"><Link to="/blogs">About Us</Link></div>
+      <div className="nav-main"><Link to="/about">About Us</Link></div>
       <div className="nav-signUp"><Link to="/signup">SignUp</Link></div>
       <div className="nav-login"><Link to="/login">Login</Link></div>
 

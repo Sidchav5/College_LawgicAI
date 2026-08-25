@@ -32,16 +32,9 @@ app.config["JWT_SECRET_KEY"] = SECRET_KEY
 jwt = JWTManager(app)
 
 # MongoDB setup
-try:
-    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where(), connect=False)
-    db = client[MONGO_DB]
-    users_collection = db["users"]
-    print("✓ Flask app initialized MongoDB client (connect=False)")
-except Exception as e:
-    print(f"⚠️ MongoDB initialization warning: {e}")
-    client = None
-    db = None
-    users_collection = None
+client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+db = client[MONGO_DB]
+users_collection = db["users"]
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

@@ -1,4 +1,3 @@
-// AnalyseContract.js
 import React, { useState, useRef, useEffect } from "react";
 import "./AnalyseContract.css";
 import Navbar from "./Navbar";
@@ -17,11 +16,9 @@ function AnalyseContract() {
   const [success, setSuccess] = useState("");
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [expandedClauses, setExpandedClauses] = useState(new Set());
   const fileInputRef = useRef(null);
-  const textAreaRef = useRef(null);
 
-  // Load analysis history from localStorage
+  // Load analysis history from localStorage on component mount
   useEffect(() => {
     const savedHistory = localStorage.getItem("contractAnalysisHistory");
     if (savedHistory) {
@@ -29,7 +26,7 @@ function AnalyseContract() {
     }
   }, []);
 
-  // Save analysis history to localStorage
+  // Save analysis history to localStorage whenever it changes
   useEffect(() => {
     if (analysisHistory.length > 0) {
       localStorage.setItem("contractAnalysisHistory", JSON.stringify(analysisHistory));
@@ -70,6 +67,7 @@ function AnalyseContract() {
       
       if (response.ok) {
         setAnalysisResult(data);
+        // Add to history
         const newAnalysis = {
           id: Date.now(),
           type: "text",
@@ -77,7 +75,7 @@ function AnalyseContract() {
           result: data,
           preview: text.substring(0, 100) + "..."
         };
-        setAnalysisHistory(prev => [newAnalysis, ...prev.slice(0, 9)]);
+        setAnalysisHistory(prev => [newAnalysis, ...prev.slice(0, 9)]); // Keep last 10
         showMessage("Analysis completed successfully!", "success");
       } else {
         showMessage(data.error || "Analysis failed");
@@ -94,7 +92,7 @@ function AnalyseContract() {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (selectedFile.type === "application/pdf") {
-        if (selectedFile.size > 10 * 1024 * 1024) {
+        if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
           showMessage("File size must be less than 10MB");
           return;
         }
@@ -133,6 +131,7 @@ function AnalyseContract() {
       
       if (response.ok) {
         setAnalysisResult(data);
+        // Add to history
         const newAnalysis = {
           id: Date.now(),
           type: "pdf",
@@ -208,29 +207,22 @@ function AnalyseContract() {
     showMessage("Analysis history cleared", "success");
   };
 
-  const toggleClause = (index) => {
-    setExpandedClauses(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
-      } else {
-        newSet.add(index);
-      }
-      return newSet;
-    });
-  };
-
   const getSeverityClass = (severity) => {
     switch (severity?.toLowerCase()) {
-      case "high": return "severity-high";
-      case "medium": return "severity-medium";
-      case "low": return "severity-low";
-      default: return "";
+      case "high":
+        return "severity-high";
+      case "medium":
+        return "severity-medium";
+      case "low":
+        return "severity-low";
+      default:
+        return "";
     }
   };
 
   const getRiskStats = () => {
     if (!analysisResult?.results) return { high: 0, medium: 0, low: 0, total: 0 };
+    
     const results = analysisResult.results;
     return {
       high: results.filter((c) => c.risk_model === "High").length,
@@ -256,26 +248,15 @@ function AnalyseContract() {
     showMessage("Results exported successfully!", "success");
   };
 
-  const copyToClipboard = () => {
-    const text = analysisResult?.results?.map(c => 
-      `Clause ${c.clause_no}: ${c.risk_model} - ${c.statement}`
-    ).join('\n');
-    navigator.clipboard?.writeText(text);
-    showMessage("Results copied to clipboard!", "success");
-  };
-
   return (
     <>
       <Navbar />
       <div className="analyse-container">
         <div className="analyse-header">
-          <div className="analyse-header-badge">
-            <span>AI-Powered Analysis</span>
-          </div>
           <h2 className="analyse-title">Analyze Contract</h2>
           <p className="analyse-subtitle">
             Upload a contract or paste text to identify potential issues and
-            receive improvement suggestions using advanced AI
+            receive improvement suggestions
           </p>
         </div>
 
@@ -303,17 +284,14 @@ function AnalyseContract() {
                 </p>
               </div>
               <div className="results-actions">
-                <button className="analyse-btn secondary" onClick={copyToClipboard}>
-                  <i className="fas fa-copy"></i> Copy
-                </button>
                 <button className="analyse-btn secondary" onClick={exportResults}>
-                  <i className="fas fa-download"></i> Export
+                  <i className="fas fa-download"></i> Export Results
                 </button>
                 <button className="analyse-btn secondary" onClick={() => setShowHistory(true)}>
                   <i className="fas fa-history"></i> History
                 </button>
                 <button className="analyse-btn primary" onClick={resetAnalysis}>
-                  <i className="fas fa-plus"></i> New Analysis
+                  <i className="fas fa-plus"></i> Analyze Another
                 </button>
               </div>
             </div>
@@ -321,28 +299,36 @@ function AnalyseContract() {
             {/* Risk Summary Cards */}
             <div className="risk-summary-cards">
               <div className="risk-card total">
-                <div className="risk-icon"><i className="fas fa-file-contract"></i></div>
+                <div className="risk-icon">
+                  <i className="fas fa-file-contract"></i>
+                </div>
                 <div className="risk-info">
                   <span className="risk-count">{riskStats.total}</span>
                   <span className="risk-label">Total Clauses</span>
                 </div>
               </div>
               <div className="risk-card high">
-                <div className="risk-icon"><i className="fas fa-exclamation-triangle"></i></div>
+                <div className="risk-icon">
+                  <i className="fas fa-exclamation-triangle"></i>
+                </div>
                 <div className="risk-info">
                   <span className="risk-count">{riskStats.high}</span>
                   <span className="risk-label">High Risk</span>
                 </div>
               </div>
               <div className="risk-card medium">
-                <div className="risk-icon"><i className="fas fa-exclamation-circle"></i></div>
+                <div className="risk-icon">
+                  <i className="fas fa-exclamation-circle"></i>
+                </div>
                 <div className="risk-info">
                   <span className="risk-count">{riskStats.medium}</span>
                   <span className="risk-label">Medium Risk</span>
                 </div>
               </div>
               <div className="risk-card low">
-                <div className="risk-icon"><i className="fas fa-check-circle"></i></div>
+                <div className="risk-icon">
+                  <i className="fas fa-check-circle"></i>
+                </div>
                 <div className="risk-info">
                   <span className="risk-count">{riskStats.low}</span>
                   <span className="risk-label">Low Risk</span>
@@ -350,7 +336,16 @@ function AnalyseContract() {
               </div>
             </div>
 
-            {/* Clause Analysis */}
+            {/* Results Summary */}
+            <div className="results-summary">
+              <h4>Result Summary</h4>
+              <p>Total clauses analyzed: {riskStats.total}</p>
+              <p>High risk: {riskStats.high}</p>
+              <p>Medium risk: {riskStats.medium}</p>
+              <p>Low risk: {riskStats.low}</p>
+            </div>
+
+            {/* Detailed Analysis */}
             <div className="issues-found">
               <div className="section-header">
                 <h4>Clause-wise Analysis</h4>
@@ -361,11 +356,8 @@ function AnalyseContract() {
                   key={index}
                   className={`clause-detail ${getSeverityClass(clause.risk_model)}`}
                 >
-                  <div className="clause-header" onClick={() => toggleClause(index)}>
-                    <h5>
-                      <span className="clause-number">Clause {clause.clause_no}</span>
-                      <span className="clause-risk-indicator"></span>
-                    </h5>
+                  <div className="clause-header">
+                    <h5>Clause {clause.clause_no}</h5>
                     <div className="risk-badges">
                       <span className={`risk-badge model ${getSeverityClass(clause.risk_model)}`}>
                         Model: {clause.risk_model}
@@ -381,14 +373,31 @@ function AnalyseContract() {
                     </div>
                   </div>
                   
-                  <div className={`clause-content ${expandedClauses.has(index) ? 'expanded' : ''}`}>
+                  <div className="clause-content">
                     <p className="clause-statement">
                       <strong>Clause Statement:</strong> {clause.statement}
                     </p>
                     
+                    {/* Only show description if it's not the placeholder */}
+                    {/* {clause.description && 
+                     clause.description !== "Enable LLM analysis for detailed explanation" && (
+                      <p className="clause-description">
+                        <strong>Description:</strong> {clause.description}
+                      </p>
+                    )} */}
+
+                    {/* Show placeholder message if LLM wasn't used */}
+                    {/* {clause.description === "Enable LLM analysis for detailed explanation" && (
+                      <p className="llm-disabled-notice">
+                        <strong>Description:</strong> 
+                        <em> LLM analysis not available. Set GROQ_API_KEY to enable detailed explanations.</em>
+                      </p>
+                    )} */}
+
+                    {/* Only show suggestions if there are actual suggestions */}
                     {clause.suggestions && clause.suggestions.length > 0 && (
                       <div className="suggestions">
-                        <strong>Suggestions:</strong>
+                        <strong>Description and Suggestions:</strong>
                         <ul>
                           {clause.suggestions.map((s, i) => (
                             <li key={i}>{s}</li>
@@ -406,14 +415,14 @@ function AnalyseContract() {
             <div className="history-header">
               <h3>Analysis History</h3>
               <button className="analyse-btn secondary" onClick={() => setShowHistory(false)}>
-                <i className="fas fa-arrow-left"></i> Back
+                <i className="fas fa-arrow-left"></i> Back to Analysis
               </button>
             </div>
             {analysisHistory.length > 0 ? (
               <>
                 <div className="history-actions">
                   <button className="analyse-btn secondary" onClick={clearHistory}>
-                    <i className="fas fa-trash"></i> Clear All
+                    <i className="fas fa-trash"></i> Clear History
                   </button>
                 </div>
                 <div className="history-list">
@@ -425,7 +434,7 @@ function AnalyseContract() {
                           {analysis.type.toUpperCase()} Analysis
                         </div>
                         <div className="history-preview">
-                          {analysis.fileName || analysis.preview || "Contract Analysis"}
+                          {analysis.fileName || analysis.preview}
                         </div>
                         <div className="history-date">
                           {new Date(analysis.timestamp).toLocaleString()}
@@ -445,7 +454,6 @@ function AnalyseContract() {
               <div className="empty-history">
                 <i className="fas fa-history"></i>
                 <p>No analysis history yet</p>
-                <p className="empty-sub">Your past analyses will appear here</p>
               </div>
             )}
           </div>
@@ -478,15 +486,16 @@ function AnalyseContract() {
               {activeTab === "text" ? (
                 <div className="analyse-card">
                   <div className="card-header">
-                    <h3><i className="fas fa-font"></i> Enter Contract Text</h3>
+                    <h3>
+                      <i className="fas fa-font"></i> Enter Contract Text
+                    </h3>
                     <div className="text-stats">
-                      <span className="char-count">{text.length} chars</span>
+                      <span className="char-count">{text.length} characters</span>
                       <span className="word-count">{text.trim() ? text.trim().split(/\s+/).length : 0} words</span>
                     </div>
                   </div>
                   <form onSubmit={handleTextSubmit}>
                     <textarea
-                      ref={textAreaRef}
                       className="analyse-textarea"
                       rows="8"
                       placeholder="Paste or type your contract text here..."
@@ -499,9 +508,13 @@ function AnalyseContract() {
                       disabled={isLoading || !text.trim()}
                     >
                       {isLoading ? (
-                        <><i className="fas fa-spinner fa-spin"></i> Analyzing...</>
+                        <>
+                          <i className="fas fa-spinner fa-spin"></i> Analyzing...
+                        </>
                       ) : (
-                        <><i className="fas fa-search"></i> Analyze Text</>
+                        <>
+                          <i className="fas fa-search"></i> Analyze Text
+                        </>
                       )}
                     </button>
                   </form>
@@ -509,12 +522,16 @@ function AnalyseContract() {
               ) : (
                 <div className="analyse-card">
                   <div className="card-header">
-                    <h3><i className="fas fa-file-pdf"></i> Upload PDF Contract</h3>
+                    <h3>
+                      <i className="fas fa-file-pdf"></i> Upload PDF Contract
+                    </h3>
                     <span className="file-size-limit">Max 10MB</span>
                   </div>
                   <form onSubmit={handleFileSubmit}>
                     <div
-                      className={`file-drop-zone ${isDragging ? "dragging" : ""} ${fileName ? "has-file" : ""}`}
+                      className={`file-drop-zone ${
+                        isDragging ? "dragging" : ""
+                      } ${fileName ? "has-file" : ""}`}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
@@ -528,11 +545,13 @@ function AnalyseContract() {
                         className="analyse-file-input"
                       />
                       <div className="drop-content">
-                        <i className={`fas ${fileName ? "fa-file-pdf" : "fa-cloud-upload-alt"}`}></i>
+                        <i className="fas fa-cloud-upload-alt"></i>
                         {fileName ? (
                           <>
                             <p className="file-name">{fileName}</p>
-                            <p className="click-to-change">Click or drag to change file</p>
+                            <p className="click-to-change">
+                              Click or drag to change file
+                            </p>
                           </>
                         ) : (
                           <>
@@ -549,9 +568,13 @@ function AnalyseContract() {
                       disabled={isLoading || !file}
                     >
                       {isLoading ? (
-                        <><i className="fas fa-spinner fa-spin"></i> Analyzing...</>
+                        <>
+                          <i className="fas fa-spinner fa-spin"></i> Analyzing...
+                        </>
                       ) : (
-                        <><i className="fas fa-search"></i> Analyze PDF</>
+                        <>
+                          <i className="fas fa-search"></i> Analyze PDF
+                        </>
                       )}
                     </button>
                   </form>
@@ -561,7 +584,9 @@ function AnalyseContract() {
 
             {/* Quick Tips */}
             <div className="quick-tips">
-              <h4><i className="fas fa-lightbulb"></i> Tips for Better Analysis</h4>
+              <h4>
+                <i className="fas fa-lightbulb"></i> Tips for Better Analysis
+              </h4>
               <div className="tips-grid">
                 <div className="tip">
                   <i className="fas fa-text-width"></i>
@@ -580,7 +605,7 @@ function AnalyseContract() {
           </>
         )}
       </div>
-      <Footer />
+      <Footer/>
     </>
   );
 }

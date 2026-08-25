@@ -10,6 +10,7 @@ import Profile from "./components/Profile";
 import AnalyseContract from "./components/AnalyseContract";
 import Generate from "./components/Generate";
 import Community from "./components/Community"
+import About from "./components/About"
 function App() {
   return (
     <Router>
@@ -22,6 +23,7 @@ function App() {
         <Route path="/analyse" element={<AnalyseContract />} />
         <Route path="/generate" element={<Generate />} />
          <Route path="/Community" element={<Community />} />
+         <Route path="/about" element={<About />} />
       </Routes>
     </Router>
   );
