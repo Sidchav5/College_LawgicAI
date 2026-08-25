@@ -613,6 +613,9 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         print(f"  [LLM] ✗ Error: {e}")
         return "", []
 
+# Global classifier instance
+_GLOBAL_CLASSIFIER = None
+
 # ----------------------------- Main Analysis -----------------------------
 def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
     """
@@ -624,6 +627,8 @@ def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
         use_llm: Whether to use LLM for descriptions (requires valid GROQ_API_KEY)
         max_clauses: Limit number of clauses to analyze (for testing)
     """
+    global _GLOBAL_CLASSIFIER
+    
     if not text and not pdf_path:
         raise ValueError("Provide either text or pdf_path")
 
@@ -633,7 +638,10 @@ def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
         print("   Descriptions will show fallback message")
         print("   To enable LLM: Set valid GROQ_API_KEY environment variable\n")
 
-    classifier = load_classifier()
+    # Only load the classifier once into memory
+    if _GLOBAL_CLASSIFIER is None:
+        _GLOBAL_CLASSIFIER = load_classifier()
+    classifier = _GLOBAL_CLASSIFIER
     
     raw_text = read_pdf_text(pdf_path) if pdf_path else text
     clauses = split_into_clauses(raw_text)
