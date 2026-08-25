@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 import Navbar from "./Navbar";
 import API_BASE_URL from "../config";
-import { Shield, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, Sparkles, Calendar, Users } from 'lucide-react';
+import { Shield, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, Sparkles, Calendar, Users, Eye, EyeOff } from 'lucide-react';
 
 function Signup() {
   const [formData, setFormData] = useState({
