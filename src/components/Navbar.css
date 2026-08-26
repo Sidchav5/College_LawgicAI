@@ -1,43 +1,445 @@
-.profile-btn {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 1.1rem;
-}
+/* Navbar.css */
 
-.dropdown {
-  position: absolute;
-  top: 50px;
-  right: 20px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  width: 160px;
-  box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+/* --- GENERAL HORIZONTAL NAVBAR --- */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+  background-color: rgba(10, 14, 26, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 40px;
+  position: sticky;
+  top: 0;
   z-index: 100;
-}
-
-.dropdown button {
   width: 100%;
-  padding: 10px;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  color: black;
 }
 
-.dropdown button:hover {
-  background-color: #f0f0f0;
+.nav-brand-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: auto;
+}
+
+.nav-name-text {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.nav-name-text i {
+  color: #7c3aed;
+}
+
+.nav-toggle-btn {
+  display: none;
+}
+
+.nav-menu-links {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.nav-link-item {
+  color: #94a3b8;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.nav-link-item:hover {
+  color: #60a5fa;
+}
+
+.nav-link-item.login-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 18px;
+  border-radius: 8px;
+  color: #f1f5f9;
+}
+
+.nav-link-item.login-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #60a5fa;
+  color: #fff;
+}
+
+.nav-link-item.dashboard-btn {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  padding: 8px 18px;
+  border-radius: 8px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+}
+
+.nav-link-item.dashboard-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+  color: white;
+}
+
+/* Profile Trigger & Dropdown */
+.nav-profile-wrapper {
+  position: relative;
 }
 
 .P {
-  color: white;       /* ✅ Makes "Profile ⬇" white */
-  cursor: pointer;    /* ✅ Looks clickable */
-  font-weight: 500;   /* optional: bolder look */
+  color: #94a3b8;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.25s;
 }
 
 .P:hover {
-  color: rgb(209, 180, 143);  /* ✅ hover effect */
+  color: #60a5fa;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: #0b0f19;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 15px;
+  min-width: 150px;
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.profile-dropdown a {
+  color: #94a3b8;
+  display: block;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: color 0.25s;
+}
+
+.profile-dropdown a:hover {
+  color: #60a5fa;
+}
+
+
+/* --- SIDEBAR NAV --- */
+.mobile-header-bar {
+  display: none;
+}
+
+.sidebar-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background-color: #080c14;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 30px 20px;
+  z-index: 1000;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 35px;
+}
+
+.sidebar-brand {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-brand i {
+  color: #7c3aed;
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sidebar-close-btn:hover {
+  color: #ef4444;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #94a3b8;
+  font-size: 0.98rem;
+  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar-item i {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+
+.sidebar-item.active {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(124, 58, 237, 0.15));
+  border-left: 3px solid #60a5fa;
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.sidebar-separator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 15px 0;
+}
+
+.sidebar-item.home-link {
+  color: #64748b;
+}
+
+.sidebar-item.home-link:hover {
+  color: #94a3b8;
+}
+
+.sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 20px;
+}
+
+.sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.sidebar-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+
+/* --- LAYOUT ADJUSTMENTS FOR SIDEBAR (DESKTOP) --- */
+@media (min-width: 769px) {
+  /* Shifts containers to make room for left-fixed sidebar nav */
+  .analyse-container:has(.sidebar-nav),
+  .about-page:has(.sidebar-nav) {
+    padding-left: 280px !important;
+  }
+
+  .sidebar-nav ~ .generate-container,
+  .sidebar-nav ~ .community-container,
+  .sidebar-nav ~ .profile-container {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+  }
+
+  /* Shifts sibling footer to match desktop container margin */
+  .sidebar-nav ~ footer {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+  }
+}
+
+
+/* --- RESPONSIVE MOBILE BAR & DRAWER --- */
+@media (max-width: 768px) {
+  /* Horizontal Nav - Collapsed into menu list */
+  .nav-bar {
+    padding: 15px 24px;
+    height: auto;
+  }
+
+  .nav-brand-container {
+    width: 100%;
+  }
+
+  .nav-name-text {
+    font-size: 1.3rem;
+  }
+
+  .nav-toggle-btn {
+    display: block;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.35rem;
+    cursor: pointer;
+  }
+
+  .nav-menu-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 15px 0 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 10px;
+  }
+
+  .nav-menu-links.open {
+    display: flex;
+  }
+
+  .nav-link-item {
+    font-size: 1.05rem;
+    padding: 8px 0;
+  }
+
+  .nav-link-item.login-btn {
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  .nav-link-item.dashboard-btn {
+    text-align: center;
+  }
+
+  .nav-profile-wrapper {
+    padding: 8px 0;
+  }
+
+  .profile-dropdown {
+    position: static;
+    box-shadow: none;
+    border: none;
+    background: rgba(255, 255, 255, 0.03);
+    margin-top: 8px;
+    padding: 10px 15px;
+  }
+
+  /* Fixed Mobile Top Bar when logged in */
+  .mobile-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    background-color: #080c14;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+  }
+
+  .sidebar-toggle-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.3rem;
+    cursor: pointer;
+  }
+
+  .mobile-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #60a5fa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-brand i {
+    color: #7c3aed;
+  }
+
+  .mobile-profile-trigger {
+    color: #94a3b8;
+    font-size: 1.35rem;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .mobile-profile-trigger:hover {
+    color: #60a5fa;
+  }
+
+  /* Mobile slide-out drawer */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1001;
+  }
+
+  .sidebar-nav {
+    transform: translateX(-100%);
+    z-index: 1002;
+    background-color: #080c14;
+    width: 280px;
+  }
+
+  .sidebar-nav.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: block;
+  }
+
+  /* Push mobile page content below fixed header bar */
+  .analyse-container:has(.sidebar-nav),
+  .about-page:has(.sidebar-nav) {
+    padding-top: 80px !important;
+  }
+
+  .sidebar-nav ~ .generate-container,
+  .sidebar-nav ~ .community-container,
+  .sidebar-nav ~ .profile-container {
+    padding-top: 80px !important;
+  }
 }

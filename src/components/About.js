@@ -1,5 +1,7 @@
 import React from 'react';
 import './About.css';
+import Navbar from './Navbar';
+import Footer from './Footer';
 
 // ─── Team Members ─────────────────────────────────────────────────────────────
 // Add your name, role, and a short bio below. Photo is optional (leave as "").
@@ -28,14 +30,7 @@ const teamMembers = [
     linkedin: '#',
     github: '#',
   },
-  {
-    name: 'Your Name Here',
-    role: 'UI/UX Designer',
-    bio: 'Short bio about this team member. What they worked on, their skills, etc.',
-    photo: '',
-    linkedin: '#',
-    github: '#',
-  },
+  
 ];
 
 // ─── Core Features ─────────────────────────────────────────────────────────────
@@ -103,6 +98,7 @@ function InitialsAvatar({ name }) {
 function About() {
   return (
     <div className="about-page">
+      <Navbar />
       {/* ── Ambient background blobs ── */}
       <div className="about-bg">
         <span className="blob blob-1" />
@@ -285,6 +281,7 @@ function About() {
           <a href="/analyse" className="cta-btn cta-secondary">Try Contract Analysis</a>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

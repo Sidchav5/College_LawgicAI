@@ -15,94 +15,87 @@ body, html, #root {
 
 .hero-section {
   background-image: url("./AImages/Hero.jpg");
-  height: 600px;
-  background-size:cover;
+  min-height: 650px;
+  background-size: cover;
+  background-position: center;
   background-repeat: no-repeat;
-}
-
-
-/**NAV**/
-.nav-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  height: 50px;
-  background-color: #1a1818;
-  padding-bottom: 5px;
+  flex-direction: column;
+  position: relative;
 }
 
-.nav-name {
-  color: rgb(125, 20, 20);
-  font-size: 0.85rem;
-  display: flex;
-  padding-top: 20px;
-  width: 50%;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.nav-main, .nav-signUp, .nav-login, .nav-profile {
-  color: rgb(111, 79, 79);
-  font-size: 0.85rem;
-  display: flex;
-  padding-top: 20px;
-  justify-content: center;
-  font-size: 1.2rem;
-}
-
-.nav-name-text {
-  padding-left: 10px;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  margin-right: 300px;
-
-  color: #87b1d1;
-}
-
+/* Base styles for global links */
 a {
   text-decoration: none;
-  color: rgb(246, 248, 249)
+  color: rgb(246, 248, 249);
 }
 
 a:hover {
-  color:  rgb(209, 180, 143);
+  color: rgb(209, 180, 143);
 }
 
-/**Heading**/
+/** Heading & Hero Info **/
 .poster {
   display: flex;
-  justify-content: space-evenly;
-  margin-top:105px;
+  justify-content: center;
+  margin-top: 80px;
+  padding: 0 20px;
 }
 
 .poster-name {
   padding-top: 10px;
-  font-size: 50px;
-  font-family: 'Times New Roman', Times, serif;
+  font-size: clamp(1.8rem, 4.5vw, 3.2rem);
+  font-family: 'Outfit', 'Times New Roman', Times, serif;
   color: rgb(235, 153, 53);
-  
+  text-align: center;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 .poster-name:hover {
   color: #ffbf00;
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 .poster-info {
   max-width: 800px;
-  margin: 60px auto;
+  margin: 40px auto;
   text-align: center;
-  font-size: 1.2rem;
-  color: #f1f1f1;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 60px 20px 0px 20px;
-  border-radius: 10px;
-  height: 150px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  line-height: 1.7;
+  color: #f1f5f9;
+  background-color: rgba(10, 14, 26, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 30px 24px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  height: auto; /* Dynamic height to prevent text truncation */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .poster-info:hover {
-  color: #efeeec;
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  background-color: rgba(10, 14, 26, 0.85);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: 100vh;
+    height: auto;
+  }
+  
+  .poster {
+    margin-top: 50px;
+  }
+  
+  .poster-info {
+    margin: 30px 16px;
+    padding: 24px 16px;
+  }
 }
 
 /* Heading Style */
