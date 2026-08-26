@@ -443,11 +443,11 @@ def adjust_risk_with_context(clause_text: str, predicted_risk: str, confidence: 
             adjusted_confidence = 0.75
             adjustment_note = "Emergency entry allowed but 24-hour notice for inspections"
     
-    # Standard utilities/repair mentions => lower risk
+    # Standard utilities/repair mentions => downgrade High to Medium
     if (utilities_count > 0 or repair_count > 0 or payment_count > 0) and aggressive_count == 0:
-        if adjusted_risk in ['Medium', 'High']:
-            adjusted_risk = 'Low'
-            adjusted_confidence = 0.80
+        if adjusted_risk == 'High':
+            adjusted_risk = 'Medium'
+            adjusted_confidence = 0.75
             adjustment_note = "Standard rent/utilities/repair language detected"
     
     # Arbitration / jurisdiction clauses reduce ambiguity but note applicability
