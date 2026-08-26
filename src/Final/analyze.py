@@ -26,13 +26,21 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from transformers import AutoTokenizer, AutoModel
 
-# --- MONKEY PATCH FOR XGBOOST 1.7.x COMPATIBILITY ---
-# XGBoost 1.7 removed use_label_encoder and throws AttributeError if accessed by old pickled models.
-# We ensure the attribute exists and is set to False so unpickling works flawlessly.
-if not hasattr(xgb.XGBClassifier, "use_label_encoder"):
+# --- MONKEY PATCH FOR XGBOOST COMPATIBILITY ---
+# Modern XGBoost removed use_label_encoder but old pickled models still reference it.
+# XGBoost uses a custom __getattr__ that intercepts instance attribute access,
+# so class-level patching alone is insufficient. We patch the class here AND
+# patch each loaded instance in load_classifier() below.
+try:
     xgb.XGBClassifier.use_label_encoder = False
-else:
-    xgb.XGBClassifier.use_label_encoder = False
+except Exception:
+    pass
+
+def _patch_xgb_instance(model):
+    """Patch an XGBClassifier instance to add use_label_encoder to its __dict__."""
+    if isinstance(model, xgb.XGBClassifier):
+        model.__dict__['use_label_encoder'] = False
+    return model
 
 # ----------------------------- Groq API key -----------------------------
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
@@ -280,10 +288,17 @@ def split_into_clauses_with_llm(text: str) -> List[str]:
         preferred = [
             "meta-llama/llama-3.3-70b-versatile",
             "meta-llama/llama-3.1-70b-versatile",
+            "llama-3.3-70b-versatile",
+            "llama-3.1-70b-versatile",
             "mixtral-8x7b-32768",
             "llama-3.1-8b-instant",
+            "llama3-70b-8192",
+            "llama3-8b-8192",
+            "gemma2-9b-it",
         ]
-        model_id = next((m for m in preferred if m in available_ids), available_ids[0] if available_ids else None)
+        # Filter to only text-capable models (exclude audio/image/whisper/tts models)
+        text_models = [m for m in available_ids if not any(x in m.lower() for x in ['whisper', 'tts', 'audio', 'orpheus', 'vision'])]
+        model_id = next((m for m in preferred if m in available_ids), text_models[0] if text_models else None)
 
         if not model_id:
             print("  [Clause Splitter] No Groq model found — using regex fallback")
@@ -489,6 +504,8 @@ def load_classifier():
     classifier.base_models = []
     for idx, name in enumerate(config['base_model_names']):
         model = joblib.load(os.path.join(MODEL_DIR, f'base_model_{idx}_{name}.pkl'))
+        # Patch XGBClassifier instances so use_label_encoder is in __dict__
+        _patch_xgb_instance(model)
         classifier.base_models.append((name, model))
         print(f"    Loaded {name}")
     
@@ -539,19 +556,26 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         preferred_models = [
            "meta-llama/llama-3.3-70b-versatile",
            "meta-llama/llama-3.1-70b-versatile",
+           "llama-3.3-70b-versatile",
+           "llama-3.1-70b-versatile",
            "mixtral-8x7b-32768",
-           "llama-3.1-8b-instant"
+           "llama-3.1-8b-instant",
+           "llama3-70b-8192",
+           "llama3-8b-8192",
+           "gemma2-9b-it",
         ]
 
-        model_id = None
         available_model_ids = [m["id"] for m in models]
+        # Filter to only text-capable models
+        text_models = [m for m in available_model_ids if not any(x in m.lower() for x in ['whisper', 'tts', 'audio', 'orpheus', 'vision'])]
+        model_id = None
         for pref in preferred_models:
             if pref in available_model_ids:
                 model_id = pref
                 break
 
-        if not model_id and available_model_ids:
-            model_id = available_model_ids[0]
+        if not model_id and text_models:
+            model_id = text_models[0]
             
         if not model_id:
             print("  [LLM] No suitable model found")
