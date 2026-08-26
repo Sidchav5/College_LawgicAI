@@ -378,26 +378,24 @@ function AnalyseContract() {
                       <strong>Clause Statement:</strong> {clause.statement}
                     </p>
                     
-                    {/* Only show description if it's not the placeholder */}
-                    {/* {clause.description && 
-                     clause.description !== "Enable LLM analysis for detailed explanation" && (
+                    {/* Description from LLM */}
+                    {clause.description && clause.description !== "Enable LLM analysis for detailed explanation" && (
                       <p className="clause-description">
-                        <strong>Description:</strong> {clause.description}
+                        <strong>📋 Description:</strong> {clause.description}
                       </p>
-                    )} */}
+                    )}
 
-                    {/* Show placeholder message if LLM wasn't used */}
-                    {/* {clause.description === "Enable LLM analysis for detailed explanation" && (
+                    {/* Fallback when LLM is disabled */}
+                    {clause.description === "Enable LLM analysis for detailed explanation" && (
                       <p className="llm-disabled-notice">
-                        <strong>Description:</strong> 
-                        <em> LLM analysis not available. Set GROQ_API_KEY to enable detailed explanations.</em>
+                        <em>⚠️ LLM analysis not available. Set GROQ_API_KEY to enable detailed explanations.</em>
                       </p>
-                    )} */}
+                    )}
 
-                    {/* Only show suggestions if there are actual suggestions */}
+                    {/* Suggestions from LLM */}
                     {clause.suggestions && clause.suggestions.length > 0 && (
                       <div className="suggestions">
-                        <strong>Description and Suggestions:</strong>
+                        <strong>💡 Suggestions:</strong>
                         <ul>
                           {clause.suggestions.map((s, i) => (
                             <li key={i}>{s}</li>

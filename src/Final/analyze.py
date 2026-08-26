@@ -647,16 +647,39 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         result = response.json()
         content = result["choices"][0]["message"]["content"].strip()
 
-        # Parse response
-        parts = re.split(r"\n\s*\n", content, maxsplit=1)
-        description = parts[0].strip()
-        suggestions = []
-        if len(parts) > 1:
-            suggestions = [
-                re.sub(r"^[\-\*\d\.\)\s]+", "", s).strip()
-                for s in parts[1].split("\n") if s.strip()
-            ]
-        
+        # Strip any echoed prompt headers (Role: / Task: / **Role:** etc.)
+        content = re.sub(r"(?m)^\*{0,2}(Role|Task|Analyze User Input|User Input)[:\*]*.*$", "", content)
+        content = content.strip()
+
+        # Split on blank lines — first paragraph = description, rest = suggestions
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", content) if p.strip()]
+        description = paragraphs[0] if paragraphs else ""
+
+        # Collect suggestion lines from remaining paragraphs
+        raw_suggestions = []
+        for para in paragraphs[1:]:
+            for line in para.split("\n"):
+                line = line.strip()
+                if line:
+                    raw_suggestions.append(line)
+
+        suggestions = [
+            re.sub(r"^[\-\*\d\.\)\s]+", "", s).strip()
+            for s in raw_suggestions if s.strip()
+        ]
+        # Filter out any blank entries after stripping
+        suggestions = [s for s in suggestions if s]
+
+        # If model lumped everything into one block, try splitting by numbered points
+        if not suggestions and description:
+            numbered = re.split(r"\n(?=\d+\.\s)", description)
+            if len(numbered) > 1:
+                description = numbered[0].strip()
+                suggestions = [
+                    re.sub(r"^\d+\.\s*", "", s).strip()
+                    for s in numbered[1:] if s.strip()
+                ]
+
         print(f"  [LLM] ✓ Generated description ({len(description)} chars, {len(suggestions)} suggestions)")
         return description, suggestions[:max_suggestions]
         
