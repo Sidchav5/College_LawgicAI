@@ -543,12 +543,13 @@ def load_classifier():
 
 # ----------------------------- LLM descriptions via Groq -----------------------------
 SYSTEM_PROMPT = (
-    "You are a senior contracts attorney and an expert in Indian law. "
-    "Given a single contract clause, explain in simple, everyday language what the clause means, (In 20 words) "
-    "using analogies where helpful to make it easier to understand. "
-    "Also, if applicable, mention relevant Indian laws, acts, or court judgments that relate to the clause. "
-    "Finally, provide 2-3 actionable suggestions on how this clause can be improved to make it clearer, "
-    "safer, and legally stronger."
+    "You are a senior contracts attorney and an expert in Indian law.\n"
+    "Your response MUST follow this exact format. Do not write anything else:\n\n"
+    "Description: [A 20-word explanation of the clause in simple language, with analogies if helpful. Mention any relevant Indian laws/acts/judgments here.]\n\n"
+    "Suggestions:\n"
+    "- [First suggestion]\n"
+    "- [Second suggestion]\n"
+    "- [Third suggestion]"
 )
 
 def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str, 
@@ -569,7 +570,7 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
         
         # Get available models
-        resp = requests.get("https://api.groq.com/openai/v1/models", headers=headers, timeout=10)
+        resp = requests.get("https://api.groq.com/openai/v1/models", headers=headers, timeout=5)
         resp.raise_for_status()
         models = resp.json().get("data", [])
         
@@ -622,9 +623,7 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
             f"Risk Assessment:\n"
             f"- Model prediction: {model_risk} (Confidence: {confidence:.1%})\n"
             f"- Adjusted risk: {adjusted_risk}{context_info}\n\n"
-            "Explain what this clause means in simple terms using analogies if possible.(in 20 words) "
-            "Also, mention any applicable Indian laws, regulations, or court judgments that relate to this clause. "
-            "Then provide 2-3 practical suggestions on how to improve this clause."
+            "Analyze this clause and provide the output in the requested format."
         )
 
         payload = {
@@ -647,38 +646,45 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         result = response.json()
         content = result["choices"][0]["message"]["content"].strip()
 
-        # Strip any echoed prompt headers (Role: / Task: / **Role:** etc.)
+        # 1. Strip thinking process tags (e.g., <think>...</think> or <thought>...</thought>)
+        content = re.sub(r"(?s)<(think|thought)>.*?</\1>", "", content).strip()
+
+        # 2. Strip any echoed prompt headers (Role: / Task: / **Role:** etc.)
         content = re.sub(r"(?m)^\*{0,2}(Role|Task|Analyze User Input|User Input)[:\*]*.*$", "", content)
         content = content.strip()
 
-        # Split on blank lines — first paragraph = description, rest = suggestions
-        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", content) if p.strip()]
-        description = paragraphs[0] if paragraphs else ""
+        # 3. Parse formatted output (e.g., Description: ... Suggestions: ...)
+        description = ""
+        suggestions = []
 
-        # Collect suggestion lines from remaining paragraphs
-        raw_suggestions = []
-        for para in paragraphs[1:]:
-            for line in para.split("\n"):
+        desc_match = re.search(r"(?i)description:\s*(.*?)(?=\n\s*(?:suggestions|suggestion):|$)", content, re.DOTALL)
+        sug_match = re.search(r"(?i)(?:suggestions|suggestion):\s*(.*)", content, re.DOTALL)
+
+        if desc_match:
+            description = desc_match.group(1).strip()
+        
+        if sug_match:
+            sug_text = sug_match.group(1).strip()
+            # Split lines and extract clean suggestions
+            for line in sug_text.split("\n"):
                 line = line.strip()
                 if line:
-                    raw_suggestions.append(line)
+                    clean_line = re.sub(r"^[\-\*\d\.\)\s]+", "", line).strip()
+                    if clean_line and not clean_line.lower().startswith("description:"):
+                        suggestions.append(clean_line)
 
-        suggestions = [
-            re.sub(r"^[\-\*\d\.\)\s]+", "", s).strip()
-            for s in raw_suggestions if s.strip()
-        ]
-        # Filter out any blank entries after stripping
-        suggestions = [s for s in suggestions if s]
-
-        # If model lumped everything into one block, try splitting by numbered points
-        if not suggestions and description:
-            numbered = re.split(r"\n(?=\d+\.\s)", description)
-            if len(numbered) > 1:
-                description = numbered[0].strip()
-                suggestions = [
-                    re.sub(r"^\d+\.\s*", "", s).strip()
-                    for s in numbered[1:] if s.strip()
-                ]
+        # Fallback to paragraph splitting if the custom regex match fails
+        if not description:
+            paragraphs = [p.strip() for p in re.split(r"\n\s*\n", content) if p.strip()]
+            description = paragraphs[0] if paragraphs else ""
+            if len(paragraphs) > 1 and not suggestions:
+                for para in paragraphs[1:]:
+                    for line in para.split("\n"):
+                        line = line.strip()
+                        if line:
+                            clean_line = re.sub(r"^[\-\*\d\.\)\s]+", "", line).strip()
+                            if clean_line:
+                                suggestions.append(clean_line)
 
         print(f"  [LLM] ✓ Generated description ({len(description)} chars, {len(suggestions)} suggestions)")
         return description, suggestions[:max_suggestions]
