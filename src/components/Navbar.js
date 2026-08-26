@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
 
 function Navbar() {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   
@@ -14,7 +14,7 @@ function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    setIsMobileSidebarOpen(false);
+    setIsSidebarOpen(false);
     setIsMobileMenuOpen(false);
     navigate("/login");
   };
@@ -28,40 +28,40 @@ function Navbar() {
   if (showSidebar) {
     return (
       <>
-        {/* Mobile Top Header (Visible only on screens <= 768px) */}
-        <div className="mobile-header-bar">
+        {/* Top Header (Visible on all screens when logged in) */}
+        <div className="top-header-bar">
           <button 
             className="sidebar-toggle-btn" 
-            onClick={() => setIsMobileSidebarOpen(true)}
+            onClick={() => setIsSidebarOpen(true)}
             aria-label="Open navigation menu"
           >
             <i className="fa-solid fa-bars"></i>
           </button>
-          <span className="mobile-brand">
+          <span className="top-brand">
             <i className="fa-solid fa-scale-balanced"></i> Lawgic
           </span>
-          <div className="mobile-profile-trigger" onClick={() => navigate("/profile")}>
+          <div className="top-profile-trigger" onClick={() => navigate("/profile")}>
             <i className="fa-solid fa-circle-user"></i>
           </div>
         </div>
 
-        {/* Backdrop overlay for mobile drawer */}
-        {isMobileSidebarOpen && (
+        {/* Backdrop overlay for drawer */}
+        {isSidebarOpen && (
           <div 
             className="sidebar-backdrop" 
-            onClick={() => setIsMobileSidebarOpen(false)}
+            onClick={() => setIsSidebarOpen(false)}
           ></div>
         )}
 
         {/* Vertical Sidebar Navigation */}
-        <nav className={`sidebar-nav ${isMobileSidebarOpen ? "open" : ""}`}>
+        <nav className={`sidebar-nav ${isSidebarOpen ? "open" : ""}`}>
           <div className="sidebar-header">
             <div className="sidebar-brand">
               <i className="fa-solid fa-scale-balanced"></i> Lawgic
             </div>
             <button 
               className="sidebar-close-btn" 
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsSidebarOpen(false)}
               aria-label="Close navigation menu"
             >
               <i className="fa-solid fa-xmark"></i>
@@ -72,35 +72,35 @@ function Navbar() {
             <Link 
               to="/analyse" 
               className={`sidebar-item ${pathname === "/analyse" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsSidebarOpen(false)}
             >
               <i className="fa-solid fa-magnifying-glass"></i> Analyze Contract
             </Link>
             <Link 
               to="/generate" 
               className={`sidebar-item ${pathname === "/generate" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsSidebarOpen(false)}
             >
               <i className="fa-solid fa-pen-nib"></i> Generate Contract
             </Link>
             <Link 
               to="/Community" 
               className={`sidebar-item ${pathname === "/Community" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsSidebarOpen(false)}
             >
               <i className="fa-solid fa-users"></i> Community Support
             </Link>
             <Link 
               to="/profile" 
               className={`sidebar-item ${pathname === "/profile" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsSidebarOpen(false)}
             >
               <i className="fa-solid fa-circle-user"></i> User Profile
             </Link>
             <Link 
               to="/about" 
               className={`sidebar-item ${pathname === "/about" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsSidebarOpen(false)}
             >
               <i className="fa-solid fa-circle-info"></i> About Us
             </Link>
@@ -110,7 +110,7 @@ function Navbar() {
             <Link 
               to="/" 
               className="sidebar-item home-link" 
-              onClick={() => setIsMobileSidebarOpen(false)}
+              onClick={() => setIsSidebarOpen(false)}
             >
               <i className="fa-solid fa-house"></i> Main Page
             </Link>
