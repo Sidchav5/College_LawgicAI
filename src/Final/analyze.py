@@ -523,12 +523,13 @@ def load_classifier():
 # ----------------------------- LLM descriptions via Groq -----------------------------
 SYSTEM_PROMPT = (
     "You are a senior contracts attorney and an expert in Indian law.\n"
-    "Your response MUST follow this exact format. Do not write anything else:\n\n"
-    "Description: [A 20-word explanation of the clause in simple language, with analogies if helpful. Mention any relevant Indian laws/acts/judgments here.]\n\n"
+    "Your response MUST follow this EXACT format with no deviations:\n\n"
+    "Description: <one sentence, max 25 words, plain language explanation of what this clause means>\n\n"
     "Suggestions:\n"
-    "- [First suggestion]\n"
-    "- [Second suggestion]\n"
-    "- [Third suggestion]"
+    "- <first actionable suggestion to improve or protect yourself>\n"
+    "- <second actionable suggestion>\n"
+    "- <third actionable suggestion>\n\n"
+    "RULES: Do NOT use markdown bold (**). Do NOT add extra sections. Start directly with 'Description:'"
 )
 
 def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str, 
@@ -592,27 +593,39 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         content = re.sub(r"(?m)^\*{0,2}(Role|Task|Analyze User Input|User Input)[:\*]*.*$", "", content)
         content = content.strip()
 
-        # 3. Parse formatted output (e.g., Description: ... Suggestions: ...)
+        # Debug: log first 300 chars of raw response
+        print(f"  [LLM] Raw response preview: {repr(content[:300])}")
+
+        # 3. Parse formatted output
         description = ""
         suggestions = []
 
-        desc_match = re.search(r"(?i)description:\s*(.*?)(?=\n\s*(?:suggestions|suggestion):|$)", content, re.DOTALL)
-        sug_match = re.search(r"(?i)(?:suggestions|suggestion):\s*(.*)", content, re.DOTALL)
+        # Match Description: up to Suggestions: (handles bold **Suggestions:** too)
+        desc_match = re.search(
+            r"(?i)description:\s*(.*?)(?=\n\s*\*{0,2}suggestions?\*{0,2}:|$)",
+            content, re.DOTALL
+        )
+        # Match Suggestions: (plain or **bold**)
+        sug_match = re.search(
+            r"(?i)\*{0,2}suggestions?\*{0,2}:\s*(.*)",
+            content, re.DOTALL
+        )
 
         if desc_match:
             description = desc_match.group(1).strip()
         
         if sug_match:
             sug_text = sug_match.group(1).strip()
-            # Split lines and extract clean suggestions
             for line in sug_text.split("\n"):
                 line = line.strip()
                 if line:
-                    clean_line = re.sub(r"^[\-\*\d\.\)\s]+", "", line).strip()
-                    if clean_line and not clean_line.lower().startswith("description:"):
+                    # Strip leading -, *, numbers, bold markers
+                    clean_line = re.sub(r"^[\-\*\d\.\)\s\*]+", "", line).strip()
+                    clean_line = clean_line.strip("*").strip()
+                    if clean_line and not clean_line.lower().startswith("description"):
                         suggestions.append(clean_line)
 
-        # Fallback to paragraph splitting if the custom regex match fails
+        # Fallback to paragraph splitting if parsing failed
         if not description:
             paragraphs = [p.strip() for p in re.split(r"\n\s*\n", content) if p.strip()]
             description = paragraphs[0] if paragraphs else ""
@@ -621,7 +634,8 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
                     for line in para.split("\n"):
                         line = line.strip()
                         if line:
-                            clean_line = re.sub(r"^[\-\*\d\.\)\s]+", "", line).strip()
+                            clean_line = re.sub(r"^[\-\*\d\.\)\s\*]+", "", line).strip()
+                            clean_line = clean_line.strip("*").strip()
                             if clean_line:
                                 suggestions.append(clean_line)
 
