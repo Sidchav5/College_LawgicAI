@@ -28,8 +28,10 @@ from transformers import AutoTokenizer, AutoModel
 
 # --- MONKEY PATCH FOR XGBOOST 1.7.x COMPATIBILITY ---
 # XGBoost 1.7 removed use_label_encoder and throws AttributeError if accessed by old pickled models.
-# We overwrite the property with a static attribute so unpickling works flawlessly.
-if hasattr(xgb.XGBClassifier, 'use_label_encoder'):
+# We ensure the attribute exists and is set to False so unpickling works flawlessly.
+if not hasattr(xgb.XGBClassifier, "use_label_encoder"):
+    xgb.XGBClassifier.use_label_encoder = False
+else:
     xgb.XGBClassifier.use_label_encoder = False
 
 # ----------------------------- Groq API key -----------------------------
