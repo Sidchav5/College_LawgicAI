@@ -388,7 +388,7 @@ function AnalyseContract() {
                     {/* Fallback when LLM is disabled */}
                     {clause.description === "Enable LLM analysis for detailed explanation" && (
                       <p className="llm-disabled-notice">
-                        <em>⚠️ LLM analysis not available. Set GROQ_API_KEY to enable detailed explanations.</em>
+                        <em>⚠️ LLM analysis not available. Set GEMINI_API_KEY to enable detailed explanations.</em>
                       </p>
                     )}
 

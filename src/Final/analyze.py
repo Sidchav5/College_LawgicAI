@@ -60,38 +60,44 @@ def _patch_xgb_instance(model):
                 model.__dict__[attr] = default
     return model
 
-# ----------------------------- Groq API key -----------------------------
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    print("⚠️  WARNING: GROQ_API_KEY not found in environment variables!")
-    print("   Set it with: export GROQ_API_KEY='your-key-here'")
+# ----------------------------- Gemini API key -----------------------------
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    print("⚠️  WARNING: GEMINI_API_KEY not found in environment variables!")
     print("   LLM descriptions will be disabled.")
 else:
-    print(f"✓ GROQ_API_KEY loaded (length: {len(GROQ_API_KEY)})")
+    print(f"✓ GEMINI_API_KEY loaded (length: {len(GEMINI_API_KEY)})")
 
 # Test API key validity
-def test_groq_api():
-    if not GROQ_API_KEY:
+def test_gemini_api():
+    if not GEMINI_API_KEY:
         return False
     try:
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
-        resp = requests.get("https://api.groq.com/openai/v1/models", headers=headers, timeout=5)
+        headers = {
+            "Authorization": f"Bearer {GEMINI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        # Connection test using minimal payload
+        payload = {
+            "model": "gemini-2.5-flash",
+            "messages": [{"role": "user", "content": "ping"}],
+            "max_tokens": 5
+        }
+        resp = requests.post(
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=5
+        )
         resp.raise_for_status()
-        models = resp.json().get('data', [])
-        print(f"✓ Groq API connection successful! Available models: {len(models)}")
+        print("✓ Gemini API connection successful!")
         return True
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 401:
-            print(f"✗ Groq API authentication FAILED: Invalid API key")
-        else:
-            print(f"✗ Groq API error: HTTP {e.response.status_code}")
-        return False
     except Exception as e:
-        print(f"✗ Groq API connection failed: {e}")
+        print(f"✗ Gemini API connection failed: {e}")
         return False
 
 # Run test at startup
-GROQ_API_AVAILABLE = test_groq_api()
+GEMINI_API_AVAILABLE = test_gemini_api()
 
 # ----------------------------- Paths -----------------------------
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "model")
@@ -265,12 +271,12 @@ def split_into_clauses_regex(text: str) -> List[str]:
 
 def split_into_clauses_with_llm(text: str) -> List[str]:
     """
-    Use Groq LLM to intelligently identify real contract clause boundaries.
+    Use Gemini LLM to intelligently identify real contract clause boundaries.
     Strips preamble, party info, signatures, and headings-only lines.
     Falls back to regex splitting if API is unavailable or returns bad output.
     """
-    if not GROQ_API_KEY or not GROQ_API_AVAILABLE:
-        print("  [Clause Splitter] Groq unavailable — using regex fallback")
+    if not GEMINI_API_KEY or not GEMINI_API_AVAILABLE:
+        print("  [Clause Splitter] Gemini unavailable — using regex fallback")
         return split_into_clauses_regex(text)
 
     # Truncate very long documents to stay within token limits (~12,000 chars)
@@ -297,39 +303,12 @@ def split_into_clauses_with_llm(text: str) -> List[str]:
     )
 
     try:
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-
-        # Pick the best available model
-        resp = requests.get("https://api.groq.com/openai/v1/models", headers=headers, timeout=10)
-        resp.raise_for_status()
-        available_ids = [m["id"] for m in resp.json().get("data", [])]
-        preferred = [
-            "meta-llama/llama-3.3-70b-versatile",
-            "meta-llama/llama-3.1-70b-versatile",
-            "llama-3.3-70b-versatile",
-            "llama-3.1-70b-versatile",
-            "mixtral-8x7b-32768",
-            "llama-3.1-8b-instant",
-            "llama3-70b-8192",
-            "llama3-8b-8192",
-            "gemma2-9b-it",
-        ]
-        # Whitelist: only models suitable for text chat completions
-        _chat_keywords = ['versatile', 'instant', 'mixtral', 'gemma', 'qwen', 'deepseek', '8192', '32768']
-        _exclude_keywords = ['whisper', 'tts', 'audio', 'orpheus', 'vision', 'guard', 'embed', 'moderation']
-        text_models = [
-            m for m in available_ids
-            if any(kw in m.lower() for kw in _chat_keywords)
-            and not any(x in m.lower() for x in _exclude_keywords)
-        ]
-        model_id = next((m for m in preferred if m in available_ids), text_models[0] if text_models else None)
-
-        if not model_id:
-            print("  [Clause Splitter] No Groq model found — using regex fallback")
-            return split_into_clauses_regex(text)
-
-        print(f"  [Clause Splitter] Using Groq model: {model_id}")
-
+        headers = {
+            "Authorization": f"Bearer {GEMINI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        model_id = "gemini-2.5-flash"
+        print(f"  [Clause Splitter] Using Gemini model: {model_id}")
         payload = {
             "model": model_id,
             "messages": [
@@ -341,7 +320,7 @@ def split_into_clauses_with_llm(text: str) -> List[str]:
         }
 
         response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             headers=headers,
             json=payload,
             timeout=60,
@@ -558,61 +537,21 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
     Get LLM-powered description and suggestions for a clause
     Returns: (description, suggestions_list)
     """
-    if not GROQ_API_KEY:
+    if not GEMINI_API_KEY:
         print("  [LLM] Skipped: No API key")
         return "", []
 
-    if not GROQ_API_AVAILABLE:
+    if not GEMINI_API_AVAILABLE:
         print("  [LLM] Skipped: API not available")
         return "", []
 
     try:
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-        
-        # Get available models
-        resp = requests.get("https://api.groq.com/openai/v1/models", headers=headers, timeout=5)
-        resp.raise_for_status()
-        models = resp.json().get("data", [])
-        
-        if not models:
-            print("  [LLM] No models available")
-            return "", []
-
-        preferred_models = [
-           "meta-llama/llama-3.3-70b-versatile",
-           "meta-llama/llama-3.1-70b-versatile",
-           "llama-3.3-70b-versatile",
-           "llama-3.1-70b-versatile",
-           "mixtral-8x7b-32768",
-           "llama-3.1-8b-instant",
-           "llama3-70b-8192",
-           "llama3-8b-8192",
-           "gemma2-9b-it",
-        ]
-
-        available_model_ids = [m["id"] for m in models]
-        # Whitelist: only models suitable for text chat completions
-        _chat_kw = ['versatile', 'instant', 'mixtral', 'gemma', 'qwen', 'deepseek', '8192', '32768']
-        _excl_kw = ['whisper', 'tts', 'audio', 'orpheus', 'vision', 'guard', 'embed', 'moderation']
-        text_models = [
-            m for m in available_model_ids
-            if any(kw in m.lower() for kw in _chat_kw)
-            and not any(x in m.lower() for x in _excl_kw)
-        ]
-        model_id = None
-        for pref in preferred_models:
-            if pref in available_model_ids:
-                model_id = pref
-                break
-
-        if not model_id and text_models:
-            model_id = text_models[0]
-            
-        if not model_id:
-            print("  [LLM] No suitable model found")
-            return "", []
-
-        print(f"  [LLM] Using model: {model_id}")
+        headers = {
+            "Authorization": f"Bearer {GEMINI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        model_id = "gemini-2.5-flash"
+        print(f"  [LLM] Using Gemini model: {model_id}")
 
         context_info = ""
         if adjustment_note:
@@ -637,7 +576,7 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         }
 
         response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             headers=headers,
             data=json.dumps(payload),
             timeout=60
@@ -724,10 +663,10 @@ def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
         raise ValueError("Provide either text or pdf_path")
 
     # Check LLM availability
-    if use_llm and not GROQ_API_AVAILABLE:
-        print("\n⚠️  WARNING: LLM analysis requested but Groq API is not available")
+    if use_llm and not GEMINI_API_AVAILABLE:
+        print("\n⚠️  WARNING: LLM analysis requested but Gemini API is not available")
         print("   Descriptions will show fallback message")
-        print("   To enable LLM: Set valid GROQ_API_KEY environment variable\n")
+        print("   To enable LLM: Set valid GEMINI_API_KEY environment variable\n")
 
     # Only load the classifier once into memory
     if _GLOBAL_CLASSIFIER is None:
@@ -769,7 +708,7 @@ def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
                 print(f"  Reason: {adjustment_note[:60]}...")
             
             desc, suggestions = ("", [])
-            if use_llm and GROQ_API_AVAILABLE:
+            if use_llm and GEMINI_API_AVAILABLE:
                 desc, suggestions = llm_describe_and_suggest(
                     clause, adjusted_risk, raw_risk, raw_confidence, adjustment_note
                 )
