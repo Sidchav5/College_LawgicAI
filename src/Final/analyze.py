@@ -26,20 +26,38 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from transformers import AutoTokenizer, AutoModel
 
-# --- MONKEY PATCH FOR XGBOOST COMPATIBILITY ---
-# Modern XGBoost removed use_label_encoder but old pickled models still reference it.
-# XGBoost uses a custom __getattr__ that intercepts instance attribute access,
-# so class-level patching alone is insufficient. We patch the class here AND
-# patch each loaded instance in load_classifier() below.
-try:
-    xgb.XGBClassifier.use_label_encoder = False
-except Exception:
-    pass
+# --- COMPREHENSIVE MONKEY PATCH FOR XGBOOST COMPATIBILITY ---
+# Old pickled XGBoost models reference attributes (use_label_encoder, gpu_id, etc.)
+# that were removed in newer XGBoost versions. XGBoost's custom __getattr__
+# raises AttributeError for these. We intercept __getattr__ on XGBModel (the
+# base class) so ANY deprecated attribute returns a safe default.
+_DEPRECATED_XGB_ATTRS = {
+    'use_label_encoder': False,
+    'gpu_id': -1,
+    'n_gpus': 0,
+    'predictor': 'auto',
+    'single_precision_histogram': False,
+    'grow_policy': 'depthwise',
+    'process_type': 'default',
+}
+
+_original_xgb_getattr = getattr(xgb.XGBModel, '__getattr__', None)
+
+def _patched_xgb_getattr(self, name):
+    if name in _DEPRECATED_XGB_ATTRS:
+        return _DEPRECATED_XGB_ATTRS[name]
+    if _original_xgb_getattr is not None:
+        return _original_xgb_getattr(self, name)
+    raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+xgb.XGBModel.__getattr__ = _patched_xgb_getattr
 
 def _patch_xgb_instance(model):
-    """Patch an XGBClassifier instance to add use_label_encoder to its __dict__."""
-    if isinstance(model, xgb.XGBClassifier):
-        model.__dict__['use_label_encoder'] = False
+    """Also inject deprecated attrs directly into instance __dict__ as a belt-and-suspenders fix."""
+    if isinstance(model, xgb.XGBModel):
+        for attr, default in _DEPRECATED_XGB_ATTRS.items():
+            if attr not in model.__dict__:
+                model.__dict__[attr] = default
     return model
 
 # ----------------------------- Groq API key -----------------------------
@@ -296,8 +314,14 @@ def split_into_clauses_with_llm(text: str) -> List[str]:
             "llama3-8b-8192",
             "gemma2-9b-it",
         ]
-        # Filter to only text-capable models (exclude audio/image/whisper/tts models)
-        text_models = [m for m in available_ids if not any(x in m.lower() for x in ['whisper', 'tts', 'audio', 'orpheus', 'vision'])]
+        # Whitelist: only models suitable for text chat completions
+        _chat_keywords = ['versatile', 'instant', 'mixtral', 'gemma', 'qwen', 'deepseek', '8192', '32768']
+        _exclude_keywords = ['whisper', 'tts', 'audio', 'orpheus', 'vision', 'guard', 'embed', 'moderation']
+        text_models = [
+            m for m in available_ids
+            if any(kw in m.lower() for kw in _chat_keywords)
+            and not any(x in m.lower() for x in _exclude_keywords)
+        ]
         model_id = next((m for m in preferred if m in available_ids), text_models[0] if text_models else None)
 
         if not model_id:
@@ -566,8 +590,14 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
         ]
 
         available_model_ids = [m["id"] for m in models]
-        # Filter to only text-capable models
-        text_models = [m for m in available_model_ids if not any(x in m.lower() for x in ['whisper', 'tts', 'audio', 'orpheus', 'vision'])]
+        # Whitelist: only models suitable for text chat completions
+        _chat_kw = ['versatile', 'instant', 'mixtral', 'gemma', 'qwen', 'deepseek', '8192', '32768']
+        _excl_kw = ['whisper', 'tts', 'audio', 'orpheus', 'vision', 'guard', 'embed', 'moderation']
+        text_models = [
+            m for m in available_model_ids
+            if any(kw in m.lower() for kw in _chat_kw)
+            and not any(x in m.lower() for x in _excl_kw)
+        ]
         model_id = None
         for pref in preferred_models:
             if pref in available_model_ids:
