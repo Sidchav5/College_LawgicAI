@@ -79,7 +79,7 @@ def test_gemini_api():
         }
         # Connection test using minimal payload
         payload = {
-            "model": "gemini-2.5-flash",
+            "model": "gemini-1.5-flash",
             "messages": [{"role": "user", "content": "ping"}],
             "max_tokens": 5
         }
@@ -307,7 +307,7 @@ def split_into_clauses_with_llm(text: str) -> List[str]:
             "Authorization": f"Bearer {GEMINI_API_KEY}",
             "Content-Type": "application/json"
         }
-        model_id = "gemini-2.5-flash"
+        model_id = "gemini-1.5-flash"
         print(f"  [Clause Splitter] Using Gemini model: {model_id}")
         payload = {
             "model": model_id,
@@ -465,60 +465,59 @@ def load_classifier():
     
     return classifier
 
-# ----------------------------- LLM descriptions via Groq -----------------------------
+# ----------------------------- LLM descriptions + Risk Assessment via Gemini 1.5 Flash -----------------------------
 SYSTEM_PROMPT = (
-    "You are a senior contracts attorney and an expert in Indian law.\n"
+    "You are a senior contracts attorney and an expert in Indian and international contract law.\n"
     "Your response MUST follow this EXACT format with no deviations:\n\n"
+    "Risk: <High or Medium or Low>\n"
+    "Reason: <one sentence explaining your risk assessment>\n\n"
     "Description: <one sentence, max 25 words, plain language explanation of what this clause means>\n\n"
     "Suggestions:\n"
     "- <first actionable suggestion to improve or protect yourself>\n"
     "- <second actionable suggestion>\n"
     "- <third actionable suggestion>\n\n"
-    "RULES: Do NOT use markdown bold (**). Do NOT add extra sections. Start directly with 'Description:'"
+    "RULES: Do NOT use markdown bold (**). Do NOT add extra sections. Start directly with 'Risk:'"
 )
 
-def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str, 
-                             confidence: float, adjustment_note: str, max_suggestions: int = 3):
+def llm_describe_and_suggest(clause: str, ml_risk: str, ml_confidence: float,
+                             max_suggestions: int = 3):
     """
-    Get LLM-powered description and suggestions for a clause
-    Returns: (description, suggestions_list)
+    Ask Gemini 1.5 Flash to independently assess risk AND provide description + suggestions.
+    This is the LLM side of the ML+LLM Ensemble Fusion.
+    Returns: (description, suggestions_list, llm_risk, llm_reason)
     """
     if not GEMINI_API_KEY:
         print("  [LLM] Skipped: No API key")
-        return "", []
+        return "", [], None, ""
 
     if not GEMINI_API_AVAILABLE:
         print("  [LLM] Skipped: API not available")
-        return "", []
+        return "", [], None, ""
 
     try:
+        model_id = "gemini-1.5-flash"
+        print(f"  [LLM] Calling {model_id} for independent risk + description...")
+
+        # Pass ML prediction as context but ask LLM to make its OWN judgment
+        user_prompt = (
+            f"Clause to analyze:\n\"\"\"{clause}\"\"\"\n\n"
+            f"ML Model context (for reference only, make your OWN independent judgment):\n"
+            f"  ML prediction: {ml_risk} (Confidence: {ml_confidence:.1%})\n\n"
+            "Now analyze this clause independently and provide your response in the exact format specified."
+        )
+
         headers = {
             "Authorization": f"Bearer {GEMINI_API_KEY}",
             "Content-Type": "application/json"
         }
-        model_id = "gemini-2.5-flash"
-        print(f"  [LLM] Using Gemini model: {model_id}")
-
-        context_info = ""
-        if adjustment_note:
-            context_info = f"\n\nNote: {adjustment_note}"
-        
-        user_prompt = (
-            f"Clause:\n\"\"\"{clause}\"\"\"\n\n"
-            f"Risk Assessment:\n"
-            f"- Model prediction: {model_risk} (Confidence: {confidence:.1%})\n"
-            f"- Adjusted risk: {adjusted_risk}{context_info}\n\n"
-            "Analyze this clause and provide the output in the requested format."
-        )
-
         payload = {
             "model": model_id,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt}
             ],
-            "temperature": 0.3,
-            "max_tokens": 800
+            "temperature": 0.2,
+            "max_tokens": 900
         }
 
         response = requests.post(
@@ -528,79 +527,115 @@ def llm_describe_and_suggest(clause: str, adjusted_risk: str, model_risk: str,
             timeout=60
         )
         response.raise_for_status()
-        result = response.json()
-        content = result["choices"][0]["message"]["content"].strip()
+        content = response.json()["choices"][0]["message"]["content"].strip()
 
-        # 1. Strip thinking process tags (e.g., <think>...</think> or <thought>...</thought>)
+        # Strip thinking/reasoning tags
         content = re.sub(r"(?s)<(think|thought)>.*?</\1>", "", content).strip()
-
-        # 2. Strip any echoed prompt headers (Role: / Task: / **Role:** etc.)
         content = re.sub(r"(?m)^\*{0,2}(Role|Task|Analyze User Input|User Input)[:\*]*.*$", "", content)
         content = content.strip()
 
-        # Debug: log first 300 chars of raw response
-        print(f"  [LLM] Raw response preview: {repr(content[:300])}")
+        print(f"  [LLM] Raw preview: {repr(content[:250])}")
 
-        # 3. Parse formatted output
+        # ── Parse LLM Risk ──
+        llm_risk = None
+        llm_reason = ""
+        risk_match = re.search(r"(?i)^risk:\s*(high|medium|low)", content, re.MULTILINE)
+        reason_match = re.search(r"(?i)^reason:\s*(.+)$", content, re.MULTILINE)
+        if risk_match:
+            llm_risk = risk_match.group(1).capitalize()  # High / Medium / Low
+        if reason_match:
+            llm_reason = reason_match.group(1).strip()
+
+        # ── Parse Description ──
         description = ""
-        suggestions = []
-
-        # Match Description: up to Suggestions: (handles bold **Suggestions:** too)
         desc_match = re.search(
             r"(?i)description:\s*(.*?)(?=\n\s*\*{0,2}suggestions?\*{0,2}:|$)",
             content, re.DOTALL
         )
-        # Match Suggestions: (plain or **bold**)
-        sug_match = re.search(
-            r"(?i)\*{0,2}suggestions?\*{0,2}:\s*(.*)",
-            content, re.DOTALL
-        )
-
         if desc_match:
             description = desc_match.group(1).strip()
-        
+
+        # ── Parse Suggestions ──
+        suggestions = []
+        sug_match = re.search(r"(?i)\*{0,2}suggestions?\*{0,2}:\s*(.*)", content, re.DOTALL)
         if sug_match:
-            sug_text = sug_match.group(1).strip()
-            for line in sug_text.split("\n"):
+            for line in sug_match.group(1).split("\n"):
                 line = line.strip()
                 if line:
-                    # Strip leading -, *, numbers, bold markers
-                    clean_line = re.sub(r"^[\-\*\d\.\)\s\*]+", "", line).strip()
-                    clean_line = clean_line.strip("*").strip()
-                    if clean_line and not clean_line.lower().startswith("description"):
-                        suggestions.append(clean_line)
+                    clean = re.sub(r"^[\-\*\d\.\)\s\*]+", "", line).strip().strip("*").strip()
+                    if clean and not clean.lower().startswith("description") and not clean.lower().startswith("risk"):
+                        suggestions.append(clean)
 
-        # Fallback to paragraph splitting if parsing failed
+        # Fallback: paragraph splitting if description missing
         if not description:
             paragraphs = [p.strip() for p in re.split(r"\n\s*\n", content) if p.strip()]
             description = paragraphs[0] if paragraphs else ""
-            if len(paragraphs) > 1 and not suggestions:
-                for para in paragraphs[1:]:
-                    for line in para.split("\n"):
-                        line = line.strip()
-                        if line:
-                            clean_line = re.sub(r"^[\-\*\d\.\)\s\*]+", "", line).strip()
-                            clean_line = clean_line.strip("*").strip()
-                            if clean_line:
-                                suggestions.append(clean_line)
 
-        print(f"  [LLM] ✓ Generated description ({len(description)} chars, {len(suggestions)} suggestions)")
-        return description, suggestions[:max_suggestions]
-        
+        print(f"  [LLM] LLM Risk: {llm_risk} | Desc: {len(description)} chars | Suggestions: {len(suggestions)}")
+        return description, suggestions[:max_suggestions], llm_risk, llm_reason
+
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 401:
-            print(f"  [LLM] ✗ Authentication failed: Invalid API key")
-        elif e.response.status_code == 429:
-            print(f"  [LLM] ✗ Rate limit exceeded")
-        else:
-            print(f"  [LLM] ✗ HTTP error: {e.response.status_code}")
-        return "", []
+        code = e.response.status_code if e.response else "?"
+        print(f"  [LLM] HTTP {code} error")
+        return "", [], None, ""
     except requests.exceptions.Timeout:
-        print(f"  [LLM] ✗ Request timeout")
-        return "", []
+        print("  [LLM] Request timeout")
+        return "", [], None, ""
     except Exception as e:
-        print(f"  [LLM] ✗ Error: {e}")
-        return "", []
+        print(f"  [LLM] Error: {e}")
+        return "", [], None, ""
+
+
+# ─────────────────────────── ML + LLM FUSION ─────────────────────────────────
+RISK_ORDER = {"Low": 0, "Medium": 1, "High": 2}
+
+def fuse_ml_llm_risk(ml_risk: str, ml_confidence: float,
+                     llm_risk: str, llm_reason: str) -> Tuple[str, float, str]:
+    """
+    Weighted ensemble fusion of ML model + Gemini LLM risk predictions.
+
+    Strategy:
+      • Both agree → boost confidence by 10% (consensus)
+      • ML confidence ≥ 0.87 → trust ML  (it's very certain)
+      • ML confidence < 0.70 → trust LLM  (ML is guessing; LLM likely better on unseen contract types)
+      • 0.70-0.87 disagreement → take the HIGHER risk  (conservative / legally safer)
+
+    Returns: (final_risk, final_confidence, fusion_note)
+    """
+    if llm_risk is None:
+        # LLM call failed — fall back to ML only
+        return ml_risk, ml_confidence, "LLM unavailable — using ML prediction"
+
+    if ml_risk == llm_risk:
+        boosted = min(ml_confidence * 1.10, 0.99)
+        note = f"ML and LLM agree: {ml_risk} (consensus, confidence boosted to {boosted:.0%})"
+        return ml_risk, boosted, note
+
+    # They disagree — apply confidence-based arbitration
+    ml_level = RISK_ORDER.get(ml_risk, 1)
+    llm_level = RISK_ORDER.get(llm_risk, 1)
+
+    if ml_confidence >= 0.87:
+        note = (f"Fusion: ML={ml_risk} ({ml_confidence:.0%}), LLM={llm_risk} — "
+                f"Trusted ML (high confidence). LLM reason: {llm_reason[:80]}")
+        return ml_risk, ml_confidence, note
+
+    if ml_confidence < 0.70:
+        note = (f"Fusion: ML={ml_risk} ({ml_confidence:.0%}), LLM={llm_risk} — "
+                f"Trusted LLM (ML uncertain). Reason: {llm_reason[:80]}")
+        return llm_risk, 0.75, note
+
+    # 0.70-0.87: take the higher (more conservative) risk
+    if llm_level > ml_level:
+        final = llm_risk
+        note = (f"Fusion: ML={ml_risk} ({ml_confidence:.0%}), LLM={llm_risk} — "
+                f"Escalated to LLM's higher risk (conservative). Reason: {llm_reason[:80]}")
+    else:
+        final = ml_risk
+        note = (f"Fusion: ML={ml_risk} ({ml_confidence:.0%}), LLM={llm_risk} — "
+                f"Kept ML's higher risk (conservative).")
+    return final, ml_confidence, note
+
 
 # Global classifier instance
 _GLOBAL_CLASSIFIER = None
@@ -651,34 +686,41 @@ def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
     rows = []
     for idx, clause in enumerate(clauses, start=1):
         try:
+            # ── Step 1: ML Model Prediction ──
             result = classifier.predict_new_clause(clause)
-            
-            raw_risk = result['predicted_risk']
-            raw_confidence = result['confidence']
-            
-            print(f"\nClause {idx}: {raw_risk} ({raw_confidence:.1%})")
-            
-            adjusted_risk, adjusted_confidence, adjustment_note = adjust_risk_with_context(
-                clause, raw_risk, raw_confidence
+            ml_risk = result['predicted_risk']
+            ml_confidence = result['confidence']
+            print(f"\nClause {idx}: ML={ml_risk} ({ml_confidence:.1%})")
+
+            # ── Step 2: Heuristic Safety Net ──
+            heuristic_risk, heuristic_conf, heuristic_note = adjust_risk_heuristics(
+                clause, ml_risk, ml_confidence
             )
-            
-            if adjustment_note:
-                print(f"  ADJUSTED: {adjusted_risk} ({adjusted_confidence:.1%})")
-                print(f"  Reason: {adjustment_note[:60]}...")
-            
-            desc, suggestions = ("", [])
+            if heuristic_note:
+                print(f"  Heuristic override: {heuristic_risk} | {heuristic_note[:60]}")
+
+            # ── Step 3: LLM Independent Assessment + Description ──
+            desc, suggestions, llm_risk, llm_reason = ("", [], None, "")
             if use_llm and GEMINI_API_AVAILABLE:
-                desc, suggestions = llm_describe_and_suggest(
-                    clause, adjusted_risk, raw_risk, raw_confidence, adjustment_note
+                desc, suggestions, llm_risk, llm_reason = llm_describe_and_suggest(
+                    clause, heuristic_risk, heuristic_conf
                 )
-            
+
+            # ── Step 4: ML + LLM Fusion ──
+            final_risk, final_confidence, fusion_note = fuse_ml_llm_risk(
+                heuristic_risk, heuristic_conf, llm_risk, llm_reason
+            )
+            print(f"  FINAL: {final_risk} ({final_confidence:.1%}) | {fusion_note[:80]}")
+
             rows.append({
                 "clause_no": idx,
                 "statement": clause,
-                "risk_model": adjusted_risk,
-                "risk_bert": raw_risk,
-                "confidence": float(adjusted_confidence),
-                "adjustment_note": adjustment_note if adjustment_note else None,
+                "risk_model": final_risk,          # Fused final risk
+                "risk_bert": ml_risk,              # Raw ML prediction
+                "risk_llm": llm_risk or "N/A",     # Gemini's independent judgment
+                "confidence": float(final_confidence),
+                "fusion_note": fusion_note,
+                "adjustment_note": heuristic_note if heuristic_note else None,
                 "description": desc if desc else "Enable LLM analysis for detailed explanation",
                 "suggestions": suggestions if suggestions else []
             })
@@ -690,8 +732,10 @@ def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
                 "statement": clause,
                 "risk_model": "Error",
                 "risk_bert": "Error",
+                "risk_llm": "Error",
                 "confidence": 0.0,
-                "adjustment_note": f"Error: {str(e)}",
+                "fusion_note": f"Error: {str(e)}",
+                "adjustment_note": None,
                 "description": "",
                 "suggestions": []
             })

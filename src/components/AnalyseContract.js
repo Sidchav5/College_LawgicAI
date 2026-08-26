@@ -360,14 +360,19 @@ function AnalyseContract() {
                     <h5>Clause {clause.clause_no}</h5>
                     <div className="risk-badges">
                       <span className={`risk-badge model ${getSeverityClass(clause.risk_model)}`}>
-                        Model: {clause.risk_model}
+                        Final: {clause.risk_model}
                         {clause.confidence && (
                           <span className="confidence"> ({(clause.confidence * 100).toFixed(1)}%)</span>
                         )}
                       </span>
                       {clause.risk_bert && (
                         <span className={`risk-badge bert ${getSeverityClass(clause.risk_bert)}`}>
-                          BERT: {clause.risk_bert}
+                          ML Base: {clause.risk_bert}
+                        </span>
+                      )}
+                      {clause.risk_llm && clause.risk_llm !== "N/A" && clause.risk_llm !== "Error" && (
+                        <span className={`risk-badge llm ${getSeverityClass(clause.risk_llm)}`} style={{backgroundColor: 'rgba(124, 58, 237, 0.2)', color: '#c4b5fd', border: '1px solid rgba(124, 58, 237, 0.4)'}}>
+                          LLM Judge: {clause.risk_llm}
                         </span>
                       )}
                     </div>
@@ -377,6 +382,13 @@ function AnalyseContract() {
                     <p className="clause-statement">
                       <strong>Clause Statement:</strong> {clause.statement}
                     </p>
+                    
+                    {/* Fusion Note */}
+                    {clause.fusion_note && (
+                      <div className="fusion-note" style={{marginBottom: '15px', padding: '10px 14px', backgroundColor: 'rgba(96,165,250,0.08)', borderRadius: '8px', borderLeft: '3px solid #60a5fa', fontSize: '0.9rem', color: '#94a3b8'}}>
+                        <strong style={{color: '#60a5fa'}}><i className="fas fa-code-branch"></i> Ensemble Fusion:</strong> {clause.fusion_note}
+                      </div>
+                    )}
                     
                     {/* Description from LLM */}
                     {clause.description && clause.description !== "Enable LLM analysis for detailed explanation" && (
