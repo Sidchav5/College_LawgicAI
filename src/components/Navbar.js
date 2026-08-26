@@ -3,10 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
 
 function Navbar() {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
@@ -14,195 +11,229 @@ function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    setIsMobileSidebarOpen(false);
-    setIsMobileMenuOpen(false);
     navigate("/login");
+    // Close offcanvas if open
+    const offcanvasEl = document.getElementById("lawgicSidebar");
+    if (offcanvasEl) {
+      const bsOffcanvas = window.bootstrap?.Offcanvas?.getInstance(offcanvasEl);
+      bsOffcanvas?.hide();
+    }
   };
 
-  // Condition to show vertical sidebar: logged in AND not on landing/login/signup
+  const closeSidebar = () => {
+    const offcanvasEl = document.getElementById("lawgicSidebar");
+    if (offcanvasEl) {
+      const bsOffcanvas = window.bootstrap?.Offcanvas?.getInstance(offcanvasEl);
+      bsOffcanvas?.hide();
+    }
+  };
+
+  // Pages that use the sidebar (logged-in service pages)
   const isLandingOrAuth = pathname === "/" || pathname === "/login" || pathname === "/signup";
   const showSidebar = token && !isLandingOrAuth;
-  // On main landing page always show signup/login (not dashboard)
+  // On main landing page always show signup/login
   const isMainLanding = pathname === "/";
 
+  /* ── SIDEBAR LAYOUT (service pages when logged in) ── */
   if (showSidebar) {
     return (
       <>
-        {/* Mobile Top Header — hamburger bar, only visible on mobile via CSS */}
-        <div className="mobile-header-bar">
-          <button 
-            className="sidebar-toggle-btn" 
-            onClick={() => setIsMobileSidebarOpen(true)}
+        {/* ── Fixed top bar with hamburger ── */}
+        <nav className="lawgic-topbar">
+          <button
+            className="lawgic-hamburger"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#lawgicSidebar"
+            aria-controls="lawgicSidebar"
             aria-label="Open navigation menu"
           >
             <i className="fa-solid fa-bars"></i>
           </button>
-          <span className="mobile-brand">
+          <span className="lawgic-topbar-brand">
             <i className="fa-solid fa-scale-balanced"></i> Lawgic
           </span>
-          <div className="mobile-profile-trigger" onClick={() => navigate("/profile")}>
+          <div
+            className="lawgic-topbar-avatar"
+            onClick={() => navigate("/profile")}
+            title="Profile"
+          >
             <i className="fa-solid fa-circle-user"></i>
           </div>
-        </div>
+        </nav>
 
-        {/* Backdrop overlay — only appears on mobile when drawer is open */}
-        {isMobileSidebarOpen && (
-          <div 
-            className="sidebar-backdrop" 
-            onClick={() => setIsMobileSidebarOpen(false)}
-          ></div>
-        )}
-
-        {/* Vertical Sidebar Navigation
-            Desktop: always visible (no transform)
-            Mobile:  slide-out drawer (transform: translateX(-100%) by default) */}
-        <nav className={`sidebar-nav ${isMobileSidebarOpen ? "open" : ""}`}>
-          <div className="sidebar-header">
-            <div className="sidebar-brand">
+        {/* ── Bootstrap Offcanvas Sidebar ── */}
+        <div
+          className="offcanvas offcanvas-start lawgic-offcanvas"
+          tabIndex="-1"
+          id="lawgicSidebar"
+          aria-labelledby="lawgicSidebarLabel"
+        >
+          {/* Offcanvas Header */}
+          <div className="offcanvas-header lawgic-offcanvas-header">
+            <h5 className="offcanvas-title lawgic-offcanvas-title" id="lawgicSidebarLabel">
               <i className="fa-solid fa-scale-balanced"></i> Lawgic
-            </div>
-            {/* X button — visible only on mobile inside the open drawer */}
-            <button 
-              className="sidebar-close-btn" 
-              onClick={() => setIsMobileSidebarOpen(false)}
-              aria-label="Close navigation menu"
+            </h5>
+            <button
+              type="button"
+              className="lawgic-close-btn"
+              data-bs-dismiss="offcanvas"
+              aria-label="Close"
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
           </div>
 
-          <div className="sidebar-menu">
-            <Link 
-              to="/analyse" 
-              className={`sidebar-item ${pathname === "/analyse" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
-            >
-              <i className="fa-solid fa-magnifying-glass"></i> Analyze Contract
-            </Link>
-            <Link 
-              to="/generate" 
-              className={`sidebar-item ${pathname === "/generate" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
-            >
-              <i className="fa-solid fa-pen-nib"></i> Generate Contract
-            </Link>
-            <Link 
-              to="/Community" 
-              className={`sidebar-item ${pathname === "/Community" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
-            >
-              <i className="fa-solid fa-users"></i> Community Support
-            </Link>
-            <Link 
-              to="/profile" 
-              className={`sidebar-item ${pathname === "/profile" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
-            >
-              <i className="fa-solid fa-circle-user"></i> User Profile
-            </Link>
-            <Link 
-              to="/about" 
-              className={`sidebar-item ${pathname === "/about" ? "active" : ""}`} 
-              onClick={() => setIsMobileSidebarOpen(false)}
-            >
-              <i className="fa-solid fa-circle-info"></i> About Us
-            </Link>
-            
-            <div className="sidebar-separator"></div>
+          {/* Offcanvas Body (Nav Links) */}
+          <div className="offcanvas-body lawgic-offcanvas-body">
+            <nav className="lawgic-sidebar-menu">
+              <Link
+                to="/analyse"
+                className={`lawgic-sidebar-item ${pathname === "/analyse" ? "active" : ""}`}
+                onClick={closeSidebar}
+              >
+                <i className="fa-solid fa-magnifying-glass"></i>
+                <span>Analyze Contract</span>
+              </Link>
+              <Link
+                to="/generate"
+                className={`lawgic-sidebar-item ${pathname === "/generate" ? "active" : ""}`}
+                onClick={closeSidebar}
+              >
+                <i className="fa-solid fa-pen-nib"></i>
+                <span>Generate Contract</span>
+              </Link>
+              <Link
+                to="/Community"
+                className={`lawgic-sidebar-item ${pathname === "/Community" ? "active" : ""}`}
+                onClick={closeSidebar}
+              >
+                <i className="fa-solid fa-users"></i>
+                <span>Community Support</span>
+              </Link>
+              <Link
+                to="/profile"
+                className={`lawgic-sidebar-item ${pathname === "/profile" ? "active" : ""}`}
+                onClick={closeSidebar}
+              >
+                <i className="fa-solid fa-circle-user"></i>
+                <span>User Profile</span>
+              </Link>
+              <Link
+                to="/about"
+                className={`lawgic-sidebar-item ${pathname === "/about" ? "active" : ""}`}
+                onClick={closeSidebar}
+              >
+                <i className="fa-solid fa-circle-info"></i>
+                <span>About Us</span>
+              </Link>
 
-            <Link 
-              to="/" 
-              className="sidebar-item home-link" 
-              onClick={() => setIsMobileSidebarOpen(false)}
-            >
-              <i className="fa-solid fa-house"></i> Main Page
-            </Link>
-          </div>
+              <div className="lawgic-sidebar-divider"></div>
 
-          <div className="sidebar-footer">
-            <button className="sidebar-logout-btn" onClick={handleLogout}>
-              <i className="fa-solid fa-right-from-bracket"></i> Logout
-            </button>
+              <Link
+                to="/"
+                className="lawgic-sidebar-item home-link"
+                onClick={closeSidebar}
+              >
+                <i className="fa-solid fa-house"></i>
+                <span>Main Page</span>
+              </Link>
+            </nav>
+
+            {/* Logout at bottom */}
+            <div className="lawgic-sidebar-footer">
+              <button className="lawgic-logout-btn" onClick={handleLogout}>
+                <i className="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
-        </nav>
+        </div>
       </>
     );
   }
 
-  // Horizontal Navigation (for main landing / login / signup pages)
+  /* ── HORIZONTAL NAVBAR (landing / login / signup) ── */
   return (
-    <nav className="nav-bar">
-      <div className="nav-brand-container">
-        <Link to="/" className="nav-name-text">
+    <nav className="navbar navbar-expand-md lawgic-navbar">
+      <div className="container-fluid px-4">
+        {/* Brand */}
+        <Link to="/" className="navbar-brand lawgic-brand">
           <i className="fa-solid fa-scale-balanced"></i> Lawgic
         </Link>
-        <button 
-          className="nav-toggle-btn" 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle navigation links"
-        >
-          <i className={`fa-solid ${isMobileMenuOpen ? "fa-xmark" : "fa-bars"}`}></i>
-        </button>
-      </div>
 
-      <div className={`nav-menu-links ${isMobileMenuOpen ? "open" : ""}`}>
-        <Link 
-          to="/about" 
-          className="nav-link-item" 
-          onClick={() => setIsMobileMenuOpen(false)}
+        {/* Mobile Toggle */}
+        <button
+          className="navbar-toggler lawgic-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNavMenu"
+          aria-controls="mainNavMenu"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
         >
-          About Us
-        </Link>
-        
-        {(token && !isMainLanding) ? (
-          <>
-            <Link 
-              to="/analyse" 
-              className="nav-link-item dashboard-btn" 
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Dashboard <i className="fa-solid fa-arrow-right"></i>
-            </Link>
-            <div className="nav-profile-wrapper">
-              <span className="P" onClick={() => setShowDropdown(!showDropdown)}>
-                Profile <i className="fa-solid fa-caret-down"></i>
-              </span>
-              {showDropdown && (
-                <div className="profile-dropdown">
-                  <Link 
-                    to="/profile" 
-                    onClick={() => { setShowDropdown(false); setIsMobileMenuOpen(false); }}
-                  >
-                    User Profile
+          <i className="fa-solid fa-bars"></i>
+        </button>
+
+        {/* Nav Links */}
+        <div className="collapse navbar-collapse" id="mainNavMenu">
+          <ul className="navbar-nav ms-auto align-items-md-center gap-md-2">
+            <li className="nav-item">
+              <Link to="/about" className="nav-link lawgic-nav-link">About Us</Link>
+            </li>
+
+            {(token && !isMainLanding) ? (
+              <>
+                <li className="nav-item">
+                  <Link to="/analyse" className="nav-link lawgic-nav-link lawgic-dashboard-btn">
+                    Dashboard <i className="fa-solid fa-arrow-right"></i>
                   </Link>
-                  <p 
-                    onClick={handleLogout} 
-                    style={{ color: "#ef4444", cursor: "pointer", margin: "10px 0 0", fontSize: "0.95rem" }}
+                </li>
+                <li className="nav-item dropdown">
+                  <span
+                    className="nav-link lawgic-nav-link dropdown-toggle"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setShowDropdown(!showDropdown)}
                   >
-                    Logout
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <Link 
-              to="/signup" 
-              className="nav-link-item" 
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              SignUp
-            </Link>
-            <Link 
-              to="/login" 
-              className="nav-link-item login-btn" 
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Login
-            </Link>
-          </>
-        )}
+                    Profile
+                  </span>
+                  {showDropdown && (
+                    <ul className="dropdown-menu dropdown-menu-end lawgic-dropdown show">
+                      <li>
+                        <Link
+                          className="dropdown-item lawgic-dropdown-item"
+                          to="/profile"
+                          onClick={() => setShowDropdown(false)}
+                        >
+                          User Profile
+                        </Link>
+                      </li>
+                      <li><hr className="dropdown-divider" /></li>
+                      <li>
+                        <span
+                          className="dropdown-item lawgic-dropdown-item text-danger"
+                          style={{ cursor: "pointer" }}
+                          onClick={handleLogout}
+                        >
+                          Logout
+                        </span>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <Link to="/signup" className="nav-link lawgic-nav-link">SignUp</Link>
+                </li>
+                <li className="nav-item">
+                  <Link to="/login" className="nav-link lawgic-nav-link lawgic-login-btn">Login</Link>
+                </li>
+              </>
+            )}
+          </ul>
+        </div>
       </div>
     </nav>
   );

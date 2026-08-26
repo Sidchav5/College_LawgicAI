@@ -1,458 +1,330 @@
-/* Navbar.css */
+/* =============================================================
+   Navbar.css  —  Custom styles layered on top of Bootstrap 5
+   ============================================================= */
 
-/* --- GENERAL HORIZONTAL NAVBAR --- */
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 70px;
-  background-color: rgba(10, 14, 26, 0.85);
+/* ── Horizontal Navbar (landing / login / signup) ── */
+.lawgic-navbar {
+  background-color: rgba(10, 14, 26, 0.92) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0 40px;
+  padding: 0 !important;
+  height: 68px;
   position: sticky;
   top: 0;
-  z-index: 100;
-  width: 100%;
+  z-index: 1030;
 }
 
-.nav-brand-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: auto;
-}
-
-.nav-name-text {
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: #60a5fa;
+.lawgic-brand {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #60a5fa !important;
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 10px;
-  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
 }
 
-.nav-name-text i {
+.lawgic-brand i {
   color: #7c3aed;
 }
 
-.nav-toggle-btn {
-  display: none;
+.lawgic-toggler {
+  background: none !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  color: #94a3b8 !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  font-size: 1.1rem;
 }
 
-.nav-menu-links {
-  display: flex;
-  align-items: center;
-  gap: 25px;
-}
-
-.nav-link-item {
-  color: #94a3b8;
-  font-size: 1rem;
+.lawgic-nav-link {
+  color: #94a3b8 !important;
   font-weight: 500;
-  text-decoration: none;
-  transition: all 0.25s ease;
+  font-size: 0.97rem;
+  transition: color 0.2s ease;
+  padding: 6px 12px !important;
 }
 
-.nav-link-item:hover {
-  color: #60a5fa;
+.lawgic-nav-link:hover {
+  color: #60a5fa !important;
 }
 
-.nav-link-item.login-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 8px 18px;
-  border-radius: 8px;
-  color: #f1f5f9;
+.lawgic-login-btn {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 8px !important;
+  color: #f1f5f9 !important;
+  padding: 7px 18px !important;
 }
 
-.nav-link-item.login-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #60a5fa;
-  color: #fff;
+.lawgic-login-btn:hover {
+  background: rgba(96, 165, 250, 0.12) !important;
+  border-color: #60a5fa !important;
+  color: #fff !important;
 }
 
-.nav-link-item.dashboard-btn {
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  padding: 8px 18px;
-  border-radius: 8px;
-  color: white;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+.lawgic-dashboard-btn {
+  background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  padding: 7px 18px !important;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+  transition: box-shadow 0.2s, transform 0.2s !important;
 }
 
-.nav-link-item.dashboard-btn:hover {
+.lawgic-dashboard-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
-  color: white;
+  box-shadow: 0 6px 20px rgba(37,99,235,0.4) !important;
+  color: #fff !important;
 }
 
-/* Profile Trigger & Dropdown */
-.nav-profile-wrapper {
-  position: relative;
+/* Dropdown */
+.lawgic-dropdown {
+  background: #0b0f19 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5) !important;
+  min-width: 160px;
+  padding: 8px !important;
 }
 
-.P {
-  color: #94a3b8;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.25s;
-}
-
-.P:hover {
-  color: #60a5fa;
-}
-
-.profile-dropdown {
-  position: absolute;
-  top: 40px;
-  right: 0;
-  background: #0b0f19;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 15px;
-  min-width: 150px;
-  z-index: 100;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-}
-
-.profile-dropdown a {
-  color: #94a3b8;
-  display: block;
+.lawgic-dropdown-item {
+  color: #94a3b8 !important;
+  border-radius: 6px !important;
   font-size: 0.95rem;
-  text-decoration: none;
-  transition: color 0.25s;
+  padding: 8px 14px !important;
+  transition: background 0.15s, color 0.15s;
 }
 
-.profile-dropdown a:hover {
-  color: #60a5fa;
+.lawgic-dropdown-item:hover {
+  background: rgba(96,165,250,0.08) !important;
+  color: #60a5fa !important;
+}
+
+/* Mobile menu collapse styling */
+@media (max-width: 767px) {
+  .lawgic-navbar .navbar-collapse {
+    background-color: #080c14;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 12px 16px 16px;
+    margin-top: 4px;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .lawgic-dropdown {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: rgba(255,255,255,0.03) !important;
+    margin-top: 6px;
+  }
 }
 
 
-/* ============================================================
-   SIDEBAR NAV — Desktop: always visible | Mobile: slide-out drawer
-   ============================================================ */
+/* =============================================================
+   Fixed Top Bar + Bootstrap Offcanvas Sidebar
+   (used on service pages when logged in)
+   ============================================================= */
 
-/* Mobile-only top bar (hidden on desktop) */
-.mobile-header-bar {
-  display: none;
-}
-
-/* The sidebar itself */
-.sidebar-nav {
+/* Fixed top bar — always visible */
+.lawgic-topbar {
   position: fixed;
   top: 0;
   left: 0;
-  bottom: 0;
-  width: 260px;
+  right: 0;
+  height: 62px;
   background-color: #080c14;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  padding: 30px 20px;
-  z-index: 1000;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
-  /* Desktop: always in view, no transform */
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar-header {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 35px;
+  padding: 0 20px;
+  z-index: 1030;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
 
-.sidebar-brand {
-  font-size: 1.5rem;
+.lawgic-hamburger {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.35rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+}
+
+.lawgic-hamburger:hover {
+  color: #60a5fa;
+  background: rgba(96,165,250,0.08);
+}
+
+.lawgic-topbar-brand {
+  font-size: 1.25rem;
   font-weight: 800;
   color: #60a5fa;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
 }
 
-.sidebar-brand i {
+.lawgic-topbar-brand i {
   color: #7c3aed;
 }
 
-/* Close (X) button — hidden on desktop, shown on mobile inside drawer */
-.sidebar-close-btn {
-  display: none;
+.lawgic-topbar-avatar {
+  color: #94a3b8;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.lawgic-topbar-avatar:hover {
+  color: #60a5fa;
+}
+
+/* Push page content below the fixed top bar */
+.analyse-container,
+.generate-container,
+.community-container,
+.profile-container,
+.about-page {
+  padding-top: 82px !important;
+}
+
+/* Offcanvas panel styling */
+.lawgic-offcanvas {
+  width: 270px !important;
+  background-color: #080c14 !important;
+  border-right: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 6px 0 30px rgba(0,0,0,0.5) !important;
+}
+
+.lawgic-offcanvas-header {
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  padding: 20px 20px !important;
+}
+
+.lawgic-offcanvas-title {
+  font-size: 1.4rem !important;
+  font-weight: 800 !important;
+  color: #60a5fa !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Outfit', sans-serif;
+}
+
+.lawgic-offcanvas-title i {
+  color: #7c3aed;
+}
+
+.lawgic-close-btn {
   background: none;
   border: none;
   color: #94a3b8;
   font-size: 1.3rem;
   cursor: pointer;
-  transition: color 0.2s;
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
 }
 
-.sidebar-close-btn:hover {
+.lawgic-close-btn:hover {
   color: #ef4444;
+  background: rgba(239,68,68,0.08);
 }
 
-.sidebar-menu {
+.lawgic-offcanvas-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex-grow: 1;
+  padding: 16px 12px !important;
+  overflow-y: auto;
 }
 
-.sidebar-item {
+/* Sidebar nav links */
+.lawgic-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.lawgic-sidebar-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 12px 16px;
   color: #94a3b8;
-  font-size: 0.98rem;
+  font-size: 0.97rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
-.sidebar-item i {
-  font-size: 1.1rem;
+.lawgic-sidebar-item i {
+  font-size: 1.05rem;
   width: 20px;
   text-align: center;
+  flex-shrink: 0;
 }
 
-.sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #f1f5f9;
+.lawgic-sidebar-item:hover {
+  background: rgba(96,165,250,0.07);
+  color: #e2e8f0;
 }
 
-.sidebar-item.active {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(124, 58, 237, 0.15));
+.lawgic-sidebar-item.active {
+  background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(124,58,237,0.15));
   border-left: 3px solid #60a5fa;
   color: #60a5fa;
   font-weight: 600;
 }
 
-.sidebar-separator {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  margin: 15px 0;
-}
-
-.sidebar-item.home-link {
+.lawgic-sidebar-item.home-link {
   color: #64748b;
 }
 
-.sidebar-item.home-link:hover {
+.lawgic-sidebar-item.home-link:hover {
   color: #94a3b8;
 }
 
-.sidebar-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 20px;
+.lawgic-sidebar-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 12px 4px;
 }
 
-.sidebar-logout-btn {
+.lawgic-sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.lawgic-logout-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   padding: 12px 16px;
   background: none;
   border: none;
   color: #ef4444;
-  font-size: 1rem;
+  font-size: 0.97rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
 }
 
-.sidebar-logout-btn:hover {
-  background: rgba(239, 68, 68, 0.08);
-}
-
-
-/* --- LAYOUT ADJUSTMENTS FOR SIDEBAR (DESKTOP) --- */
-@media (min-width: 769px) {
-  /* Shifts containers to make room for left-fixed sidebar nav */
-  .analyse-container:has(.sidebar-nav),
-  .about-page:has(.sidebar-nav) {
-    padding-left: 280px !important;
-  }
-
-  .sidebar-nav ~ .generate-container,
-  .sidebar-nav ~ .community-container,
-  .sidebar-nav ~ .profile-container {
-    margin-left: 260px !important;
-    width: calc(100% - 260px) !important;
-  }
-
-  /* Shifts sibling footer to match desktop container margin */
-  .sidebar-nav ~ footer {
-    margin-left: 260px !important;
-    width: calc(100% - 260px) !important;
-  }
-}
-
-
-/* ============================================================
-   MOBILE — hamburger drawer behaviour
-   ============================================================ */
-@media (max-width: 768px) {
-
-  /* ── Horizontal Nav (landing / login / signup) ── */
-  .nav-bar {
-    padding: 15px 24px;
-    height: auto;
-  }
-
-  .nav-brand-container {
-    width: 100%;
-  }
-
-  .nav-name-text {
-    font-size: 1.3rem;
-  }
-
-  .nav-toggle-btn {
-    display: block;
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-size: 1.35rem;
-    cursor: pointer;
-  }
-
-  .nav-menu-links {
-    display: none;
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 15px 0 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    margin-top: 10px;
-  }
-
-  .nav-menu-links.open {
-    display: flex;
-  }
-
-  .nav-link-item {
-    font-size: 1.05rem;
-    padding: 8px 0;
-  }
-
-  .nav-link-item.login-btn {
-    text-align: center;
-    margin-top: 5px;
-  }
-
-  .nav-link-item.dashboard-btn {
-    text-align: center;
-  }
-
-  .nav-profile-wrapper {
-    padding: 8px 0;
-  }
-
-  .profile-dropdown {
-    position: static;
-    box-shadow: none;
-    border: none;
-    background: rgba(255, 255, 255, 0.03);
-    margin-top: 8px;
-    padding: 10px 15px;
-  }
-
-  /* ── Mobile top bar (shown instead of permanent sidebar) ── */
-  .mobile-header-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px;
-    background-color: #080c14;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 0 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 999;
-  }
-
-  .sidebar-toggle-btn {
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-size: 1.3rem;
-    cursor: pointer;
-  }
-
-  .mobile-brand {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #60a5fa;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .mobile-brand i {
-    color: #7c3aed;
-  }
-
-  .mobile-profile-trigger {
-    color: #94a3b8;
-    font-size: 1.35rem;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-
-  .mobile-profile-trigger:hover {
-    color: #60a5fa;
-  }
-
-  /* Backdrop behind the open drawer */
-  .sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 1001;
-  }
-
-  /* Sidebar hides off-screen by default on mobile */
-  .sidebar-nav {
-    transform: translateX(-100%);
-    z-index: 1002;
-    background-color: #080c14;
-    width: 280px;
-  }
-
-  /* Slides in when open class is applied */
-  .sidebar-nav.open {
-    transform: translateX(0);
-  }
-
-  /* Show the X close button inside the drawer */
-  .sidebar-close-btn {
-    display: block;
-  }
-
-  /* Push page content below the fixed mobile header bar */
-  .analyse-container:has(.sidebar-nav),
-  .about-page:has(.sidebar-nav) {
-    padding-top: 80px !important;
-  }
-
-  .sidebar-nav ~ .generate-container,
-  .sidebar-nav ~ .community-container,
-  .sidebar-nav ~ .profile-container {
-    padding-top: 80px !important;
-  }
+.lawgic-logout-btn:hover {
+  background: rgba(239,68,68,0.08);
+  color: #f87171;
 }
