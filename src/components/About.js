@@ -5,15 +5,15 @@ import './About.css';
 // Add your name, role, and a short bio below. Photo is optional (leave as "").
 const teamMembers = [
   {
-    name: 'Your Name Here',
-    role: 'Full Stack Developer',
+    name: 'Siddhesh Chavan',
+    role: 'Full Stack & AI Developer',
     bio: 'Short bio about this team member. What they worked on, their skills, etc.',
     photo: '', // paste image URL or leave blank for initials avatar
     linkedin: '#',
     github: '#',
   },
   {
-    name: 'Your Name Here',
+    name: 'Asmita Pawar',
     role: 'ML Engineer',
     bio: 'Short bio about this team member. What they worked on, their skills, etc.',
     photo: '',
