@@ -22,6 +22,8 @@ function Navbar() {
   // Condition to show vertical sidebar: logged in AND not on landing/login/signup
   const isLandingOrAuth = pathname === "/" || pathname === "/login" || pathname === "/signup";
   const showSidebar = token && !isLandingOrAuth;
+  // On main landing page always show signup/login (not dashboard)
+  const isMainLanding = pathname === "/";
 
   if (showSidebar) {
     return (
@@ -149,7 +151,7 @@ function Navbar() {
           About Us
         </Link>
         
-        {token ? (
+        {(token && !isMainLanding) ? (
           <>
             <Link 
               to="/analyse" 

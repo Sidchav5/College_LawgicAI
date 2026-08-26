@@ -686,7 +686,7 @@ def analyze_contract(text=None, pdf_path=None, use_llm=True, max_clauses=None):
         ])
 
     print(f"\nAnalyzing {len(clauses)} clauses...")
-    print(f"LLM Analysis: {'Enabled' if use_llm and GROQ_API_AVAILABLE else 'Disabled'}")
+    print(f"LLM Analysis: {'Enabled' if use_llm and GEMINI_API_AVAILABLE else 'Disabled'}")
     print("=" * 70)
     
     rows = []
