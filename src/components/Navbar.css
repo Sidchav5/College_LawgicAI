@@ -134,64 +134,16 @@
 }
 
 
-/* --- SIDEBAR NAV (Collapsible on all screens) --- */
-.top-header-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-  background-color: #080c14;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0 20px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
+/* ============================================================
+   SIDEBAR NAV — Desktop: always visible | Mobile: slide-out drawer
+   ============================================================ */
+
+/* Mobile-only top bar (hidden on desktop) */
+.mobile-header-bar {
+  display: none;
 }
 
-.sidebar-toggle-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  font-size: 1.3rem;
-  cursor: pointer;
-}
-
-.top-brand {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #60a5fa;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.top-brand i {
-  color: #7c3aed;
-}
-
-.top-profile-trigger {
-  color: #94a3b8;
-  font-size: 1.35rem;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.top-profile-trigger:hover {
-  color: #60a5fa;
-}
-
-/* Sidebar slide-out drawer */
-.sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1001;
-}
-
+/* The sidebar itself */
 .sidebar-nav {
   position: fixed;
   top: 0;
@@ -203,14 +155,10 @@
   display: flex;
   flex-direction: column;
   padding: 30px 20px;
-  z-index: 1002;
+  z-index: 1000;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+  /* Desktop: always in view, no transform */
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(-100%);
-}
-
-.sidebar-nav.open {
-  transform: translateX(0);
 }
 
 .sidebar-header {
@@ -233,8 +181,9 @@
   color: #7c3aed;
 }
 
+/* Close (X) button — hidden on desktop, shown on mobile inside drawer */
 .sidebar-close-btn {
-  display: block;
+  display: none;
   background: none;
   border: none;
   color: #94a3b8;
@@ -325,22 +274,36 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
-/* Push page content below fixed header bar */
-.analyse-container:has(.sidebar-nav),
-.about-page:has(.sidebar-nav),
-.sidebar-nav ~ .generate-container,
-.sidebar-nav ~ .community-container,
-.sidebar-nav ~ .profile-container,
-.sidebar-nav ~ footer {
-  padding-top: 80px !important;
-  margin-left: 0 !important;
-  padding-left: 0 !important;
-  width: 100% !important;
+
+/* --- LAYOUT ADJUSTMENTS FOR SIDEBAR (DESKTOP) --- */
+@media (min-width: 769px) {
+  /* Shifts containers to make room for left-fixed sidebar nav */
+  .analyse-container:has(.sidebar-nav),
+  .about-page:has(.sidebar-nav) {
+    padding-left: 280px !important;
+  }
+
+  .sidebar-nav ~ .generate-container,
+  .sidebar-nav ~ .community-container,
+  .sidebar-nav ~ .profile-container {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+  }
+
+  /* Shifts sibling footer to match desktop container margin */
+  .sidebar-nav ~ footer {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+  }
 }
 
-/* --- RESPONSIVE MOBILE BAR --- */
+
+/* ============================================================
+   MOBILE — hamburger drawer behaviour
+   ============================================================ */
 @media (max-width: 768px) {
-  /* Horizontal Nav - Collapsed into menu list */
+
+  /* ── Horizontal Nav (landing / login / signup) ── */
   .nav-bar {
     padding: 15px 24px;
     height: auto;
@@ -403,5 +366,93 @@
     background: rgba(255, 255, 255, 0.03);
     margin-top: 8px;
     padding: 10px 15px;
+  }
+
+  /* ── Mobile top bar (shown instead of permanent sidebar) ── */
+  .mobile-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    background-color: #080c14;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+  }
+
+  .sidebar-toggle-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.3rem;
+    cursor: pointer;
+  }
+
+  .mobile-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #60a5fa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-brand i {
+    color: #7c3aed;
+  }
+
+  .mobile-profile-trigger {
+    color: #94a3b8;
+    font-size: 1.35rem;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .mobile-profile-trigger:hover {
+    color: #60a5fa;
+  }
+
+  /* Backdrop behind the open drawer */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1001;
+  }
+
+  /* Sidebar hides off-screen by default on mobile */
+  .sidebar-nav {
+    transform: translateX(-100%);
+    z-index: 1002;
+    background-color: #080c14;
+    width: 280px;
+  }
+
+  /* Slides in when open class is applied */
+  .sidebar-nav.open {
+    transform: translateX(0);
+  }
+
+  /* Show the X close button inside the drawer */
+  .sidebar-close-btn {
+    display: block;
+  }
+
+  /* Push page content below the fixed mobile header bar */
+  .analyse-container:has(.sidebar-nav),
+  .about-page:has(.sidebar-nav) {
+    padding-top: 80px !important;
+  }
+
+  .sidebar-nav ~ .generate-container,
+  .sidebar-nav ~ .community-container,
+  .sidebar-nav ~ .profile-container {
+    padding-top: 80px !important;
   }
 }
